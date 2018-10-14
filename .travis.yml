@@ -1,0 +1,79 @@
+# We need a decent ubuntu dist
+sudo: required
+dist: trusty
+
+# Modern cpp settings from
+#  http://genbattle.bitbucket.org/blog/2016/01/17/c++-travis-ci/
+language: cpp
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - george-edison55-precise-backports
+          packages:
+            - g++-5
+            - cmake
+            - cmake-data
+            - git
+            - libgtk2.0-dev
+            - pkg-config
+            - libavcodec-dev
+            - libavformat-dev
+            - libswscale-dev
+            - python-dev
+            - python-numpy
+            - libtbb2
+            - libtbb-dev
+            - libjpeg-dev
+            - libpng-dev
+            - libtiff-dev
+            - libjasper-dev
+            - libdc1394-22-dev
+      env: COMPILER=g++-5
+
+# OpenCV
+
+before_script:
+  - git clone https://github.com/opencv/opencv.git
+  - cd opencv
+  - git checkout 3.3.0
+  - cd ..
+
+  - git clone https://github.com/opencv/opencv_contrib.git
+  - cd opencv_contrib
+  - git checkout 3.3.0
+  - cd ..
+
+  - cd opencv
+  - mkdir build
+  - cd build
+  - cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_TBB=ON -D WITH_V4L=ON -D WITH_QT=ON -D WITH_OPENGL=ON -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules ..
+  - make -j$(nproc)
+  - sudo make install
+  - sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf.d/opencv.conf'
+  - sudo ldconfig
+
+  - cd ../../
+
+before_install:
+  - pip install --user cpp-coveralls
+install:
+  - sudo apt-get install -y -qq lcov
+script:
+  - export CXX=$COMPILER;
+  - mkdir build
+  - cd build
+  - cmake -DCOVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ../
+  - make
+  - make code_coverage
+  - test/smartLane-test
+
+after_success:
+  - coveralls --root .. -E ".*external.*" -E ".*CMakeFiles.*" -E ".*test/.*.cpp.*"
+
+notifications:
+email: false
