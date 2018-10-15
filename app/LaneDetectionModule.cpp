@@ -127,24 +127,24 @@ void LaneDetectionModule::extractROI(const cv::Mat& src, cv::Mat& dst) {
 
 void LaneDetectionModule::transformPerspective(const cv::Mat& src,
                                                cv::Mat& dst) {
-  int width = src.cols;
-  int height = src.rows;
+  int w = src.cols;
+  int h = src.rows;
 
   dst = src.clone();
 
   // Make corners for the transform
-  cv::Point2f start[4] = { cv::Point2f(200, height - 50), cv::Point2f(
-      width / 2 - 50, height / 2 + 70), cv::Point2f(width / 2 + 50,
-                                                    height / 2 + 70),
-      cv::Point2f(width - 100, height - 50) };
+  // br, bl, tl, tr -> order
+  cv::Point2f start[4] = { cv::Point2f(w, h - 10), cv::Point2f(0, h - 10),
+      cv::Point2f(546, 460), cv::Point2f(732, 460) };
 
-  cv::Point2f end[4] = { cv::Point2f(200, height), cv::Point2f(200, 0),
-      cv::Point2f(width - 100, 0), cv::Point2f(
-      width - 100, height) };
+  cv::Point2f end[4] = { cv::Point2f(w, h), cv::Point2f(0, h),
+      cv::Point2f(0,
+                                                                           0),
+      cv::Point2f(w, 0) };
 
   cv::Mat transformMatrix = getPerspectiveTransform(start, end);
 
-  cv::warpPerspective(src, dst, transformMatrix, src.size());
+  cv::warpPerspective(src, dst, transformMatrix, cv::Size(w, h));
 
 //  circle(dst, end[0], 5, Scalar(0, 0, 125), -1);
 //  circle(dst, end[1], 5, Scalar(0, 0, 125), -1);
