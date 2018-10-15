@@ -161,16 +161,169 @@ void LaneDetectionModule::transformPerspective(const cv::Mat& src,
  *   @param curveFlag to set degree of curve
  *   @return nothing
  */
+//void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
+//                                       Lane& lane2, int curveFlag) {
+//  int w = src.cols;
+//  int h = src.rows;
+//
+//  int bottomHeight = h - 0;
+//  cv::Mat grayTC;
+//
+//  //  std::cout << "Image size to extract with col: " << w << " row: " << h
+//  //            << std::endl;
+//
+//  cv::Rect roi(0, h / 2, w, h / 2);
+//  cv::Mat croppedIm = src(roi);
+//
+//  // Reduce the input matrix to a single row
+//  std::vector<double> histogram;
+//  cv::reduce(croppedIm, histogram, 0, CV_REDUCE_SUM);
+//
+//  // Split the two vectors for left and right lane
+//  std::size_t const halfSize = histogram.size() / 2;
+//  std::vector<double> leftHist(histogram.begin(), histogram.begin() + halfSize);
+//  std::vector<double> rightHist(histogram.begin() + halfSize, histogram.end());
+//
+//  //  for (int i = 0; i < leftHist.size(); i++) {
+//  //    std::cout << "Left Index: " << i << " Value: " << leftHist[i] << std::endl;
+//  //  }
+//  //
+//  //  for (int i = 0; i < rightHist.size(); i++) {
+//  //    std::cout << "Right Index: " << i << " Value: " << rightHist[i]
+//  //              << std::endl;
+//  //  }
+//
+//  // Get the max element in each half
+//  int maxLeftIndex = std::max_element(leftHist.begin(), leftHist.end())
+//      - leftHist.begin();
+//  int maxLeft = *std::max_element(leftHist.begin(), leftHist.end());
+//
+//  int maxRightIndex = std::max_element(rightHist.begin(), rightHist.end())
+//      - rightHist.begin();
+//  int maxRight = *std::max_element(rightHist.begin(), rightHist.end());
+//
+//  int averagedRight = lane2.getStableCenter(halfSize + maxRightIndex);
+//
+////  std::cout << "Left Lane peak index: " << maxLeftIndex;
+////  std::cout << "\tRight Lane peak index: " << halfSize + maxRightIndex;
+////  std::cout << "\tAveraged Right Lane peak index: " << averagedRight
+////            << std::endl;
+//
+////  cv::Mat test;
+////  src.copyTo(test);
+//
+//  // Convert the gray image to RGB
+//  cv::cvtColor(src, grayTC, cv::COLOR_GRAY2BGR);
+//
+//  cv::circle(grayTC, cv::Point(maxLeftIndex, bottomHeight), 10,
+//             cv::Scalar(0, 0, 125), -1);
+//
+//  cv::circle(grayTC,
+//             cv::Point(averagedRight, bottomHeight),
+//             15,
+//             cv::Scalar(0, 0, 125), -1);
+//
+//  cv::circle(grayTC, cv::Point(halfSize + maxRightIndex, bottomHeight), 10,
+//             cv::Scalar(125, 125, 0), -1);
+//
+//  // Sliding Window approach
+//  int windowCount = 9;
+//  int windowHeight = h / 9;
+//  int windowWidth = windowHeight * 2;
+//
+//  // Left Lane)
+//  std::vector<cv::Point> leftLane;
+//  for (int i = 0; i < windowCount; i++) {
+//    // Compute the top left and bottom right vertice of rectangle
+//    cv::Point tl(maxLeftIndex - windowWidth / 2, bottomHeight - windowHeight);
+//    cv::Point br(maxLeftIndex + windowWidth / 2, bottomHeight);
+//    cv::rectangle(grayTC, tl, br, cv::Scalar(0, 255, 204), 1);
+//
+//    std::vector<int> nextCenter;
+//    // Get the location of the white pixels in the box
+//    for (int j = tl.x; j <= br.x; j++) {
+//      for (int k = tl.y; k <= br.y; k++) {
+//        if (src.at<uchar>(k, j) > 0) {
+//          leftLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
+//          grayTC.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(255, 0, 0);
+//          nextCenter.push_back(j);
+////          std::cout << "On" << "X: " << j << " Y: " << k << std::endl;
+//        }
+//      }
+//    }
+//
+//    // Calculate average of the x co-ordinate for next box
+//    if (!nextCenter.empty()) {
+//      int average = std::accumulate(nextCenter.begin(), nextCenter.end(), 0)
+//          / nextCenter.size();
+//      maxLeftIndex = average;
+//    }
+//    bottomHeight = bottomHeight - windowHeight + 1;
+//  }
+//
+//
+//  cv::Mat laneImg;
+//  grayTC.copyTo(laneImg);
+//  // Right lane
+//  std::vector<cv::Point> rightLane;
+//
+//  // reset bottom height
+//  bottomHeight = h - 0;
+//
+//  // Loop through the windows
+//  for (int i = 0; i < windowCount; i++) {
+//    // Compute the top left and bottom right vertice of rectangle
+//    cv::Point tl(averagedRight - windowWidth / 2, bottomHeight - windowHeight);
+//    cv::Point br(averagedRight + windowWidth / 2, bottomHeight);
+//    cv::rectangle(laneImg, tl, br, cv::Scalar(0, 255, 204), 1);
+//
+//    std::vector<int> nextCenter;
+//    // Get the location of the white pixels in the box
+//    for (int j = tl.x; j <= br.x; j++) {
+//      for (int k = tl.y; k <= br.y; k++) {
+//        if (src.at<uchar>(k, j) > 0) {
+////          rightLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
+//          laneImg.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(255, 0, 0);
+//          nextCenter.push_back(j);
+////          std::cout << "On" << "X: " << j << " Y: " << k << std::endl;
+//        }
+//      }
+//    }
+//
+//    // Calculate average of the x coordinate for next box
+//    if (!nextCenter.empty()) {
+//      int average = std::accumulate(nextCenter.begin(), nextCenter.end(), 0)
+//          / nextCenter.size();
+//      averagedRight = average;
+//    }
+//    bottomHeight = bottomHeight - windowHeight + 1;
+//  }
+//
+////  cv::imshow("Cropped", laneImg);
+//
+////  std::this_thread::sleep_for(std::chrono::seconds(1));
+//
+//}
+
+// Backup function extract lines
 void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
                                        Lane& lane2, int curveFlag) {
   int w = src.cols;
   int h = src.rows;
 
-  int bottomHeight = h - 0;
+  std::cout << "Image size to extract with col: " << w << " row: " << h
+            << std::endl;
 
-  //  std::cout << "Image size to extract with col: " << w << " row: " << h
-  //            << std::endl;
+  // Height to start the sliding windows
+  int padding = 10;
+  int bottomHeight = h - padding;
+  int bottomWidth = w - padding;
 
+  // Convert the gray src image to bgr for plotting colors(3-channel)
+  cv::Mat colorLane;
+  cv::cvtColor(src, colorLane, CV_GRAY2BGR);
+
+  // Create a mask for bottom half to get the histograms
   cv::Rect roi(0, h / 2, w, h / 2);
   cv::Mat croppedIm = src(roi);
 
@@ -178,135 +331,158 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
   std::vector<double> histogram;
   cv::reduce(croppedIm, histogram, 0, CV_REDUCE_SUM);
 
-  //  std::cout << "Size: " << histogram.size();
-  //  for (int i = 0; i < histogram.size(); i++) {
-  //    std::cout << "Index: " << i << " Value: " << histogram[i] << std::endl;
-  //  }
-
   // Split the two vectors for left and right lane
   std::size_t const halfSize = histogram.size() / 2;
   std::vector<double> leftHist(histogram.begin(), histogram.begin() + halfSize);
   std::vector<double> rightHist(histogram.begin() + halfSize, histogram.end());
 
-  //  for (int i = 0; i < leftHist.size(); i++) {
-  //    std::cout << "Left Index: " << i << " Value: " << leftHist[i] << std::endl;
-  //  }
-  //
-  //  for (int i = 0; i < rightHist.size(); i++) {
-  //    std::cout << "Right Index: " << i << " Value: " << rightHist[i]
-  //              << std::endl;
-  //  }
-
-  // Get the max element in each half
+  // Get the max element in left half
   int maxLeftIndex = std::max_element(leftHist.begin(), leftHist.end())
       - leftHist.begin();
-  int maxLeft = *std::max_element(leftHist.begin(), leftHist.end());
 
+  // Get the max element in left half
   int maxRightIndex = std::max_element(rightHist.begin(), rightHist.end())
       - rightHist.begin();
-  int maxRight = *std::max_element(rightHist.begin(), rightHist.end());
 
-  int averagedRight = lane2.getStableCenter(halfSize + maxRightIndex);
+  maxRightIndex = maxRightIndex + halfSize;
 
-//  std::cout << "Left Lane peak index: " << maxLeftIndex;
-//  std::cout << "\tRight Lane peak index: " << halfSize + maxRightIndex;
-//  std::cout << "\tAveraged Right Lane peak index: " << averagedRight
-//            << std::endl;
+  // Normalize the right lane as there are breaks in the lane-Optional for stability
+  maxRightIndex = lane2.getStableCenter(maxRightIndex);
 
-  cv::Mat test;
-  src.copyTo(test);
+  // Declare vectors of Point for storing lane points
+  std::vector<cv::Point> leftLane;
+  std::vector<cv::Point> rightLane;
 
-  // Convert the gray image to RGB
-  cv::Mat grayTC;
-  cv::cvtColor(test, grayTC, cv::COLOR_GRAY2BGR);
-
-  cv::circle(grayTC, cv::Point(maxLeftIndex, bottomHeight), 10,
-             cv::Scalar(0, 0, 125), -1);
-
-  cv::circle(grayTC,
-             cv::Point(averagedRight, bottomHeight),
-             15,
-             cv::Scalar(0, 0, 125), -1);
-
-  cv::circle(grayTC, cv::Point(halfSize + maxRightIndex, bottomHeight), 10,
-             cv::Scalar(125, 125, 0), -1);
+//  // Loop through the image to get the points - Left lane
+//  for (int j = 10; j <= halfSize; j++) {
+//    for (int k = 10; k <= h - 10; k++) {
+//      if (src.at<uchar>(k, j) > 0) {
+//        leftLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
+//        colorLane.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(255, 0, 0);
+//      }
+//    }
+//  }
+//
+//  // Loop through the image to get the points - Right lane
+//  for (int j = halfSize + 1; j <= w - 10; j++) {
+//    for (int k = 10; k <= h - 10; k++) {
+//      if (src.at<uchar>(k, j) > 0) {
+//        rightLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
+//        colorLane.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(0, 0, 255);
+//      }
+//    }
+//  }
 
   // Sliding Window approach
   int windowCount = 9;
-  int windowHeight = h / 9;
+  int windowHeight = (h - padding) / windowCount;
   int windowWidth = windowHeight * 2;
+  std::cout << "Sliding window parameters: count: " << windowCount
+            << " height: " << windowHeight << " width: " << windowWidth
+            << std::endl;
 
   // Left Lane)
-  std::vector<cv::Point> leftLane;
+  int currentHeight = bottomHeight;
   for (int i = 0; i < windowCount; i++) {
-    // Compute the top left and bottom right vertice of rectangle
-    cv::Point tl(maxLeftIndex - windowWidth / 2, bottomHeight - windowHeight);
-    cv::Point br(maxLeftIndex + windowWidth / 2, bottomHeight);
-    cv::rectangle(grayTC, tl, br, cv::Scalar(0, 255, 204), 1);
 
-    std::vector<int> nextCenter;
-    // Get the location of the white pixels in the box
-    for (int j = tl.x; j <= br.x; j++) {
-      for (int k = tl.y; k <= br.y; k++) {
+    // Get the top left and bottom right point to make a rectangle
+    int tlX = maxLeftIndex - windowWidth / 2;
+    int tlY = currentHeight - windowHeight;
+    int brX = maxLeftIndex + windowWidth / 2;
+    int brY = currentHeight;
+
+    // boundary checks
+    tlX = (tlX < 0) ? padding : tlX;
+    tlY = (tlY < 0) ? padding : tlY;
+
+    brX = (brX > w) ? bottomWidth : brX;
+    brY = (brY > h) ? bottomHeight : brY;
+
+    cv::Point tl(tlX, tlY);
+    cv::Point br(brX, brY);
+
+    cv::rectangle(colorLane, tl, br, cv::Scalar(0, 255, 204), 1);
+
+    // Create a temporary vector to store the x's for next box
+    std::vector<int> nextX;
+    // Get the location of the white pixels to store in vector
+    for (int j = tlX; j <= brX; j++) {
+      for (int k = tlY; k <= brY; k++) {
         if (src.at<uchar>(k, j) > 0) {
+          colorLane.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(0, 0, 255);
           leftLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
-          grayTC.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(255, 0, 0);
-          nextCenter.push_back(j);
-//          std::cout << "On" << "X: " << j << " Y: " << k << std::endl;
+          nextX.push_back(j);
         }
       }
     }
 
-    // Calculate average of the x co-ordinate for next box
-//    std::cout << "nextcenter size: " << nextCenter.size() << std::endl;
-    if (!nextCenter.empty()) {
-      int average = std::accumulate(nextCenter.begin(), nextCenter.end(), 0)
-          / nextCenter.size();
-      maxLeftIndex = average;
+    // Get the center of the next bounding box
+    if (!nextX.empty()) {
+      maxLeftIndex = std::accumulate(nextX.begin(), nextX.end(), 0)
+          / nextX.size();
     }
-    bottomHeight = bottomHeight - windowHeight + 1;
+    currentHeight = currentHeight - windowHeight;
   }
 
-  // Right lane
-  std::vector<cv::Point> rightLane;
-
-  // reset bottom height
-  bottomHeight = h - 0;
-
-  // Loop through the windows
+  // Right Lane)
+  currentHeight = bottomHeight;
   for (int i = 0; i < windowCount; i++) {
-    // Compute the top left and bottom right vertice of rectangle
-    cv::Point tl(averagedRight - windowWidth / 2, bottomHeight - windowHeight);
-    cv::Point br(averagedRight + windowWidth / 2, bottomHeight);
-    cv::rectangle(grayTC, tl, br, cv::Scalar(0, 255, 204), 1);
 
-    std::vector<int> nextCenter;
-    // Get the location of the white pixels in the box
-    for (int j = tl.x; j <= br.x; j++) {
-      for (int k = tl.y; k <= br.y; k++) {
+    // Get the top left and bottom right point to make a rectangle
+    int tlX = maxRightIndex - windowWidth / 2;
+    int tlY = currentHeight - windowHeight;
+    int brX = maxRightIndex + windowWidth / 2;
+    int brY = currentHeight;
+
+    // boundary checks
+    tlX = (tlX < 0) ? padding : tlX;
+    tlY = (tlY < 0) ? padding : tlY;
+
+    brX = (brX > w) ? bottomWidth : brX;
+    brY = (brY > h) ? bottomHeight : brY;
+
+    cv::Point tl(tlX, tlY);
+    cv::Point br(brX, brY);
+
+    cv::rectangle(colorLane, tl, br, cv::Scalar(0, 255, 204), 1);
+
+    // Create a temporary vector to store the x's for next box
+    std::vector<int> nextX;
+    // Get the location of the white pixels to store in vector
+    for (int j = tlX; j <= brX; j++) {
+      for (int k = tlY; k <= brY; k++) {
         if (src.at<uchar>(k, j) > 0) {
+          colorLane.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(0, 255, 0);
           rightLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
-          grayTC.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(255, 0, 0);
-          nextCenter.push_back(j);
-//          std::cout << "On" << "X: " << j << " Y: " << k << std::endl;
+          nextX.push_back(j);
         }
       }
     }
 
-    // Calculate average of the x co-ordinate for next box
-//    std::cout << "nextcenter size: " << nextCenter.size() << std::endl;
-    if (!nextCenter.empty()) {
-      int average = std::accumulate(nextCenter.begin(), nextCenter.end(), 0)
-          / nextCenter.size();
-      averagedRight = average;
+    // Get the center of the next bounding box
+    if (!nextX.empty()) {
+      maxRightIndex = std::accumulate(nextX.begin(), nextX.end(), 0)
+          / nextX.size();
     }
-    bottomHeight = bottomHeight - windowHeight + 1;
+    currentHeight = currentHeight - windowHeight;
   }
 
-  cv::imshow("Cropped", grayTC);
+
+
+  /* All the plotting part below this line - Not necessary for program working
+   * Create a copy of the input src image for plotting purposes
+   */
+
+  cv::circle(colorLane, cv::Point(maxLeftIndex, bottomHeight), 10,
+             cv::Scalar(0, 0, 125), -1);
+
+  cv::circle(colorLane, cv::Point(maxRightIndex, bottomHeight), 10,
+             cv::Scalar(0, 0, 125), -1);
+
+  std::cout << "Size: " << colorLane.size() << std::endl;
+  cv::imshow("Lane center", colorLane);
 
 //  std::this_thread::sleep_for(std::chrono::seconds(1));
-
 }
 
 /**
@@ -398,7 +574,7 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     // Step 6: Get the lane parameters
     // curveFlag = 1: Straight Line
     // curveFlag = 2: 2nd order polynomial fit
-//    extractLanes(warpedImage, leftLane, rightLane, 2);
+    extractLanes(warpedImage, leftLane, rightLane, 2);
 //    extractLanes(warpedImage, 2);
 
     cv::Mat combined;

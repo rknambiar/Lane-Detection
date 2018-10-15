@@ -45,6 +45,16 @@ class Lane {
    */
   Lane();
 
+  /**
+   *   @brief Default constructor for Lane
+   *          with ployorder,colour,polyCoeff,startCoordinate,status
+   *          random values
+   *
+   *   @param polyOrder is order of fitting polynomial
+   *   @param color is the color of lane
+   *   @param averagingCount number of values to average
+   *   @return nothing
+   */
   Lane(int polyOrder, std::string color, int averagingCount);
 
   /**
