@@ -14,9 +14,13 @@
  */
 
 #include <iostream>
-#include "LaneDetectionModule.hpp"
-#include "Lane.h"
+#include "LaneDetectionModule.cpp"
+//#include "Lane.h"
 
-int main() {
+int main(int argc, char* argv[]) {
+  LaneDetectionModule lm;
+
+  std::cout << "Starting lane detection with video: " << argv[1] << std::endl;
+  lm.detectLane(argv[1]);
   return 0;
 }

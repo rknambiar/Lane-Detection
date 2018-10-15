@@ -75,16 +75,27 @@ public:
 	void thresholdImageW(const cv::Mat& src,cv::Mat& dst);
 
   /**
-	   *   @brief Method extractROI to set
-	   *   		  region of interest for LaneDetectionModule
-	   *
-	   *
-	   *   @param src is a Matrix of source of image
-	   *   @param dst is a Matrix of destination of image
-	   *   @return nothing
-	   */
+   *   @brief Method extractROI to set
+   *   		  region of interest for LaneDetectionModule
+   *
+   *
+   *   @param src is a Matrix of source of image
+   *   @param dst is a Matrix of destination of image
+   *   @return nothing
+   */
 	void extractROI(const cv::Mat& src,cv::Mat& dst);
-	  /**
+
+  /**
+   *   @brief Method transforming perspective of lane image
+   *
+   *
+   *   @param src is a Matrix of source of image
+   *   @param dst is a Matrix of destination of image
+   *   @return nothing
+   */
+  void transformPerspective(const cv::Mat& src, cv::Mat& dst);
+
+  /**
 	   *   @brief Method extractLanes to calculate
 	   *   		  parameters of lines and its characteristics
 	   *   		  for LaneDetectionModule.

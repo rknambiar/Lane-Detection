@@ -55,6 +55,14 @@ LaneDetectionModule::~LaneDetectionModule() {
  *   @return nothing
  */
 void LaneDetectionModule::undistortImage(const cv::Mat& src, cv::Mat& dst) {
+
+  cv::Mat cameraMatrix =
+      (cv::Mat_<double>(3, 3) << 1154.22732, 0.0, 671.627794, 0.0, 1148.18221, 386.046312, 0.0, 0.0, 1.0);
+
+  std::vector<double> distortionCoeff { -.242565104, -0.0477893070,
+      -0.00131388084, -0.0000879107779, 0.0220573263 };
+
+  cv::undistort(src, dst, cameraMatrix, distortionCoeff);
 }
 
 /**
@@ -67,6 +75,11 @@ void LaneDetectionModule::undistortImage(const cv::Mat& src, cv::Mat& dst) {
  *   @return nothing
  */
 void LaneDetectionModule::thresholdImageY(const cv::Mat& src, cv::Mat& dst) {
+  // Convert to grayscale image
+  cv::cvtColor(src, dst, cv::COLOR_BGR2HLS);
+
+  // use white thresholding values to detect only road lanes
+  cv::inRange(dst, yellowMin, yellowMax, dst);
 }
 
 /**
@@ -79,6 +92,11 @@ void LaneDetectionModule::thresholdImageY(const cv::Mat& src, cv::Mat& dst) {
  *   @return nothing
  */
 void LaneDetectionModule::thresholdImageW(const cv::Mat& src, cv::Mat& dst) {
+  // Convert to grayscale image
+  cv::cvtColor(src, dst, cv::COLOR_RGB2GRAY);
+
+  // use white thresholding values to detect only road lanes
+  cv::inRange(dst, grayscaleMin, grayscaleMax, dst);
 }
 
 /**
@@ -91,6 +109,47 @@ void LaneDetectionModule::thresholdImageW(const cv::Mat& src, cv::Mat& dst) {
  *   @return nothing
  */
 void LaneDetectionModule::extractROI(const cv::Mat& src, cv::Mat& dst) {
+  int width = src.cols;
+  int height = src.rows;
+
+  cv::Mat mask = cv::Mat::zeros(height, width, CV_8U);
+  // Make corners for the mask
+  cv::Point pts[4] = { cv::Point(0, height), cv::Point(width / 2 - 100,
+                                                       height / 2 + 50),
+      cv::Point(width / 2 + 100, height / 2 + 50), cv::Point(width, height) };
+
+  // Create a polygon
+  cv::fillConvexPoly(mask, pts, 4, cv::Scalar(255));
+
+  // And the source thresholded image and mask
+  bitwise_and(src, mask, dst);
+}
+
+void LaneDetectionModule::transformPerspective(const cv::Mat& src,
+                                               cv::Mat& dst) {
+  int width = src.cols;
+  int height = src.rows;
+
+  dst = src.clone();
+
+  // Make corners for the transform
+  cv::Point2f start[4] = { cv::Point2f(200, height - 50), cv::Point2f(
+      width / 2 - 50, height / 2 + 70), cv::Point2f(width / 2 + 50,
+                                                    height / 2 + 70),
+      cv::Point2f(width - 100, height - 50) };
+
+  cv::Point2f end[4] = { cv::Point2f(200, height), cv::Point2f(200, 0),
+      cv::Point2f(width - 100, 0), cv::Point2f(
+      width - 100, height) };
+
+  cv::Mat transformMatrix = getPerspectiveTransform(start, end);
+
+  cv::warpPerspective(src, dst, transformMatrix, src.size());
+
+//  circle(dst, end[0], 5, Scalar(0, 0, 125), -1);
+//  circle(dst, end[1], 5, Scalar(0, 0, 125), -1);
+//  circle(dst, end[2], 5, Scalar(0, 0, 125), -1);
+//  circle(dst, end[3], 5, Scalar(0, 0, 125), -1);
 }
 
 /**
@@ -145,6 +204,52 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
  *   @return bool for code working.
  */
 bool LaneDetectionModule::detectLane(std::string videoName) {
+  cv::VideoCapture cap(videoName);  // open the default camera
+  if (!cap.isOpened())  // check if we succeeded
+    return -1;
+
+  cv::namedWindow("Lane Detection", 1);
+
+  for (;;) {
+    cv::Mat frame, whiteThreshold, yellowThreshold, combinedThreshold,
+        gaussianBlurImage, ROIImage, warpedImage, undistortedImage;
+    cap >> frame;
+
+    // Step 1: Undistort the input image given camera params
+    undistortImage(frame, undistortedImage);
+
+    // Step 2: Get white lane
+    thresholdImageW(undistortedImage, whiteThreshold);
+
+    // Step 2: Get Yellow lane
+    thresholdImageY(undistortedImage, yellowThreshold);
+
+    // Step 2: Combine both the masks
+    bitwise_or(whiteThreshold, yellowThreshold, combinedThreshold);
+
+    // Combine mask with grayscale image. Do we need this?
+    cv::Mat grayscaleImage, grayscaleMask;
+    cv::cvtColor(undistortedImage, grayscaleImage, cv::COLOR_BGR2GRAY);
+    bitwise_and(grayscaleImage, combinedThreshold, grayscaleMask);
+
+    // Step 3: Apply Gaussian filter to smooth thresholded image
+    cv::GaussianBlur(combinedThreshold, gaussianBlurImage, cv::Size(5, 5), 0,
+                     0);
+
+    // Step 4: Extract the region of interest
+    extractROI(gaussianBlurImage, ROIImage);
+
+    // Step 5: Transform perspective
+    transformPerspective(ROIImage, warpedImage);
+
+    cv::Mat combined;
+    hconcat(grayscaleImage, warpedImage, combined);
+    imshow("Lane Detection", combined);
+
+    if (cv::waitKey(30) >= 0)
+      break;
+  }
+  // the camera will be deinitialized automatically in VideoCapture destructor
   return 0;
 }
 
