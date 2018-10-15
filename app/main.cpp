@@ -20,6 +20,10 @@
 int main(int argc, char* argv[]) {
   LaneDetectionModule lm;
 
+  if (argc != 2)
+    std::cout
+        << "Did not receive video location as argument. Format: ./app/shell-app ../project-video.mp4"
+        << std::endl;
   std::cout << "Starting lane detection with video: " << argv[1] << std::endl;
   lm.detectLane(argv[1]);
   return 0;

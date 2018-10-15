@@ -24,13 +24,17 @@
 #include <opencv2/opencv.hpp>
 
 class Lane {
- public:
+ private:
   int polyOrder;  // declare integer for order of line.
   std::string colour;  //set RGB values for colour.
   std::vector<double> polyCoeff;  // Coefficients for equation
   cv::Point startCoordinates;  //Reference coordinates for line.
-  bool status = false;  //for status for program.
+  std::vector<int> averagingCenter;  // Average center to prevent jumps
+  int averagingCount;
+  int currentAveragingIndex;
+  bool status;  //for status for program.
 
+ public:
   /**
    *   @brief Default constructor for Lane
    *          with ployorder,colour,polyCoeff,startCoordinate,status
@@ -39,7 +43,9 @@ class Lane {
    *   @param nothing
    *   @return nothing
    */
-	Lane();
+  Lane();
+
+  Lane(int polyOrder, std::string color, int averagingCount);
 
   /**
    *   @brief Default destructor for Lane
@@ -47,6 +53,8 @@ class Lane {
    *   @return nothing
    */
   ~Lane();
+
+  int getStableCenter(int coordinate);
 };
 
 #endif /* TRAFFIC_LANE_H_ */

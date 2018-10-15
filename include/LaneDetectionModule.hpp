@@ -19,8 +19,16 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <chrono>
+#include <thread>
 #include <opencv2/opencv.hpp>
-#include "Lane.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/features2d/features2d.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+#include "Lane.hpp"
 
 class LaneDetectionModule {
 public:
@@ -93,7 +101,8 @@ public:
    *   @param dst is a Matrix of destination of image
    *   @return nothing
    */
-  void transformPerspective(const cv::Mat& src, cv::Mat& dst);
+  void transformPerspective(const cv::Mat& src, cv::Mat& dst, cv::Mat& Tm,
+                            cv::Mat& invTm);
 
   /**
 	   *   @brief Method extractLanes to calculate
@@ -107,7 +116,10 @@ public:
 	   *   @param curveFlag to set degree of curve
 	   *   @return nothing
 	   */
-	void extractLanes(const cv::Mat& src,Lane& lane1,Lane& lane2,int curveFlag);
+  void extractLanes(const cv::Mat& src, Lane& lane1, Lane& lane2,
+                    int curveFlag);
+
+  void extractLanes(const cv::Mat& src, int curveFlag);
 
   /**
 	   *   @brief Method getDriveHeading to calculate

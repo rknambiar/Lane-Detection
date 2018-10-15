@@ -14,12 +14,7 @@
  */
 
 #include "LaneDetectionModule.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/opencv.hpp"
-#include "opencv2/features2d/features2d.hpp"
-#include "opencv2/calib3d/calib3d.hpp"
+#include "Lane.cpp"
 
 /**
  *   @brief Default constructor for LaneDetectionModule
@@ -126,7 +121,8 @@ void LaneDetectionModule::extractROI(const cv::Mat& src, cv::Mat& dst) {
 }
 
 void LaneDetectionModule::transformPerspective(const cv::Mat& src,
-                                               cv::Mat& dst) {
+                                               cv::Mat& dst,
+                                               cv::Mat& Tm, cv::Mat& invTm) {
   int w = src.cols;
   int h = src.rows;
 
@@ -142,9 +138,10 @@ void LaneDetectionModule::transformPerspective(const cv::Mat& src,
                                                                            0),
       cv::Point2f(w, 0) };
 
-  cv::Mat transformMatrix = getPerspectiveTransform(start, end);
+  Tm = getPerspectiveTransform(start, end);
+  invTm = getPerspectiveTransform(end, start);
 
-  cv::warpPerspective(src, dst, transformMatrix, cv::Size(w, h));
+  cv::warpPerspective(src, dst, Tm, cv::Size(w, h));
 
 //  circle(dst, end[0], 5, Scalar(0, 0, 125), -1);
 //  circle(dst, end[1], 5, Scalar(0, 0, 125), -1);
@@ -165,7 +162,151 @@ void LaneDetectionModule::transformPerspective(const cv::Mat& src,
  *   @return nothing
  */
 void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
- Lane& lane2, int curveFlag) {
+                                       Lane& lane2, int curveFlag) {
+  int w = src.cols;
+  int h = src.rows;
+
+  int bottomHeight = h - 0;
+
+  //  std::cout << "Image size to extract with col: " << w << " row: " << h
+  //            << std::endl;
+
+  cv::Rect roi(0, h / 2, w, h / 2);
+  cv::Mat croppedIm = src(roi);
+
+  // Reduce the input matrix to a single row
+  std::vector<double> histogram;
+  cv::reduce(croppedIm, histogram, 0, CV_REDUCE_SUM);
+
+  //  std::cout << "Size: " << histogram.size();
+  //  for (int i = 0; i < histogram.size(); i++) {
+  //    std::cout << "Index: " << i << " Value: " << histogram[i] << std::endl;
+  //  }
+
+  // Split the two vectors for left and right lane
+  std::size_t const halfSize = histogram.size() / 2;
+  std::vector<double> leftHist(histogram.begin(), histogram.begin() + halfSize);
+  std::vector<double> rightHist(histogram.begin() + halfSize, histogram.end());
+
+  //  for (int i = 0; i < leftHist.size(); i++) {
+  //    std::cout << "Left Index: " << i << " Value: " << leftHist[i] << std::endl;
+  //  }
+  //
+  //  for (int i = 0; i < rightHist.size(); i++) {
+  //    std::cout << "Right Index: " << i << " Value: " << rightHist[i]
+  //              << std::endl;
+  //  }
+
+  // Get the max element in each half
+  int maxLeftIndex = std::max_element(leftHist.begin(), leftHist.end())
+      - leftHist.begin();
+  int maxLeft = *std::max_element(leftHist.begin(), leftHist.end());
+
+  int maxRightIndex = std::max_element(rightHist.begin(), rightHist.end())
+      - rightHist.begin();
+  int maxRight = *std::max_element(rightHist.begin(), rightHist.end());
+
+  int averagedRight = lane2.getStableCenter(halfSize + maxRightIndex);
+
+//  std::cout << "Left Lane peak index: " << maxLeftIndex;
+//  std::cout << "\tRight Lane peak index: " << halfSize + maxRightIndex;
+//  std::cout << "\tAveraged Right Lane peak index: " << averagedRight
+//            << std::endl;
+
+  cv::Mat test;
+  src.copyTo(test);
+
+  // Convert the gray image to RGB
+  cv::Mat grayTC;
+  cv::cvtColor(test, grayTC, cv::COLOR_GRAY2BGR);
+
+  cv::circle(grayTC, cv::Point(maxLeftIndex, bottomHeight), 10,
+             cv::Scalar(0, 0, 125), -1);
+
+  cv::circle(grayTC,
+             cv::Point(averagedRight, bottomHeight),
+             15,
+             cv::Scalar(0, 0, 125), -1);
+
+  cv::circle(grayTC, cv::Point(halfSize + maxRightIndex, bottomHeight), 10,
+             cv::Scalar(125, 125, 0), -1);
+
+  // Sliding Window approach
+  int windowCount = 9;
+  int windowHeight = h / 9;
+  int windowWidth = windowHeight * 2;
+
+  // Left Lane)
+  std::vector<cv::Point> leftLane;
+  for (int i = 0; i < windowCount; i++) {
+    // Compute the top left and bottom right vertice of rectangle
+    cv::Point tl(maxLeftIndex - windowWidth / 2, bottomHeight - windowHeight);
+    cv::Point br(maxLeftIndex + windowWidth / 2, bottomHeight);
+    cv::rectangle(grayTC, tl, br, cv::Scalar(0, 255, 204), 1);
+
+    std::vector<int> nextCenter;
+    // Get the location of the white pixels in the box
+    for (int j = tl.x; j <= br.x; j++) {
+      for (int k = tl.y; k <= br.y; k++) {
+        if (src.at<uchar>(k, j) > 0) {
+          leftLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
+          grayTC.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(255, 0, 0);
+          nextCenter.push_back(j);
+//          std::cout << "On" << "X: " << j << " Y: " << k << std::endl;
+        }
+      }
+    }
+
+    // Calculate average of the x co-ordinate for next box
+//    std::cout << "nextcenter size: " << nextCenter.size() << std::endl;
+    if (!nextCenter.empty()) {
+      int average = std::accumulate(nextCenter.begin(), nextCenter.end(), 0)
+          / nextCenter.size();
+      maxLeftIndex = average;
+    }
+    bottomHeight = bottomHeight - windowHeight + 1;
+  }
+
+  // Right lane
+  std::vector<cv::Point> rightLane;
+
+  // reset bottom height
+  bottomHeight = h - 0;
+
+  // Loop through the windows
+  for (int i = 0; i < windowCount; i++) {
+    // Compute the top left and bottom right vertice of rectangle
+    cv::Point tl(averagedRight - windowWidth / 2, bottomHeight - windowHeight);
+    cv::Point br(averagedRight + windowWidth / 2, bottomHeight);
+    cv::rectangle(grayTC, tl, br, cv::Scalar(0, 255, 204), 1);
+
+    std::vector<int> nextCenter;
+    // Get the location of the white pixels in the box
+    for (int j = tl.x; j <= br.x; j++) {
+      for (int k = tl.y; k <= br.y; k++) {
+        if (src.at<uchar>(k, j) > 0) {
+          rightLane.push_back(cv::Point(k, j));  // Push as row(y), col(x)
+          grayTC.at<cv::Vec3b>(cv::Point(j, k)) = cv::Vec3b(255, 0, 0);
+          nextCenter.push_back(j);
+//          std::cout << "On" << "X: " << j << " Y: " << k << std::endl;
+        }
+      }
+    }
+
+    // Calculate average of the x co-ordinate for next box
+//    std::cout << "nextcenter size: " << nextCenter.size() << std::endl;
+    if (!nextCenter.empty()) {
+      int average = std::accumulate(nextCenter.begin(), nextCenter.end(), 0)
+          / nextCenter.size();
+      averagedRight = average;
+    }
+    bottomHeight = bottomHeight - windowHeight + 1;
+  }
+
+  cv::imshow("Cropped", grayTC);
+
+//  std::this_thread::sleep_for(std::chrono::seconds(1));
+
 }
 
 /**
@@ -209,11 +350,21 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     return -1;
 
   cv::namedWindow("Lane Detection", 1);
+  cv::namedWindow("Cropped", 1);
+  cv::moveWindow("Cropped", 20, 20);
+
+  Lane leftLane(2, "red", 10), rightLane(2, "blue", 10);
+  int frameNumber = 0;
 
   for (;;) {
+    std::cout << "Frame number: " << frameNumber << std::endl;
     cv::Mat frame, whiteThreshold, yellowThreshold, combinedThreshold,
         gaussianBlurImage, ROIImage, warpedImage, undistortedImage;
     cap >> frame;
+
+    if (frame.empty()) {
+      return true;
+    }
 
     // Step 1: Undistort the input image given camera params
     undistortImage(frame, undistortedImage);
@@ -240,12 +391,21 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     extractROI(gaussianBlurImage, ROIImage);
 
     // Step 5: Transform perspective
-    transformPerspective(ROIImage, warpedImage);
+    cv::Mat transformMatrix, invtransformMatrix;
+    transformPerspective(ROIImage, warpedImage, transformMatrix,
+                         invtransformMatrix);
+
+    // Step 6: Get the lane parameters
+    // curveFlag = 1: Straight Line
+    // curveFlag = 2: 2nd order polynomial fit
+//    extractLanes(warpedImage, leftLane, rightLane, 2);
+//    extractLanes(warpedImage, 2);
 
     cv::Mat combined;
     hconcat(grayscaleImage, warpedImage, combined);
     imshow("Lane Detection", combined);
 
+    frameNumber++;
     if (cv::waitKey(30) >= 0)
       break;
   }
