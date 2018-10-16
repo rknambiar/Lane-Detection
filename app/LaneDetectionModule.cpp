@@ -21,7 +21,7 @@
  *
  *
  *   @param nothing
- *   @return nothing
+ *   @return nothi
  */
 LaneDetectionModule::LaneDetectionModule() {
   yellowMin = cv::Scalar(20, 100, 100);  // yellow lane min threshold
