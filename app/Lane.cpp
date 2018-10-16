@@ -77,3 +77,17 @@ int Lane::getStableCenter(int coordinate) {
                                 0) / averagingCenter.size();
   return average;
 }
+
+void Lane::setStartCoordinate(cv::Point point) {
+  startCoordinates = point;
+}
+
+void Lane::setStatus(bool flag) {
+  status = flag;
+}
+
+void Lane::setPolyCoeff(cv::Mat laneCoeff) {
+  polyCoeff.push_back(laneCoeff.at<float>(0, 0));
+  polyCoeff.push_back(laneCoeff.at<float>(1, 0));
+  polyCoeff.push_back(laneCoeff.at<float>(2, 0));
+}

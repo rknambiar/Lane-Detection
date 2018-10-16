@@ -27,9 +27,11 @@ class Lane {
  private:
   int polyOrder;  // declare integer for order of line.
   std::string colour;  //set RGB values for colour.
-  std::vector<double> polyCoeff;  // Coefficients for equation
+  std::vector<float> polyCoeff;  // Coefficients for equation
   cv::Point startCoordinates;  //Reference coordinates for line.
-  std::vector<int> averagingCenter;  // Average center to prevent jumps
+
+  // Average center to prevent jumps for entire run
+  std::vector<int> averagingCenter;
   int averagingCount;
   int currentAveragingIndex;
   bool status;  //for status for program.
@@ -65,6 +67,12 @@ class Lane {
   ~Lane();
 
   int getStableCenter(int coordinate);
+
+  void setStartCoordinate(cv::Point point);
+
+  void setStatus(bool flag);
+
+  void setPolyCoeff(cv::Mat coeff);
 };
 
 #endif /* TRAFFIC_LANE_H_ */

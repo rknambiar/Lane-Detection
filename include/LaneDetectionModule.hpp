@@ -121,6 +121,8 @@ public:
 
   void extractLanes(const cv::Mat& src, int curveFlag);
 
+  void fitPoly(const std::vector<cv::Point>& src, cv::Mat&, int order);
+
   /**
 	   *   @brief Method getDriveHeading to calculate
 	   *   		  drive heading to be given to actuator for further action
