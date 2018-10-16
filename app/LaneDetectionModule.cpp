@@ -401,12 +401,16 @@ double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2) {
  *   @return nothing
  */
 void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
- Lane& lane2, double heading) {
-  std::vector<int> yaxis = { 50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
-      550, 600, 650, 700 };
+                                        Lane& lane2, double heading,
+                                        cv::Mat inv) {
+  std::vector<int> yaxis = { 15, 50, 100, 150, 200, 250, 300, 350, 400, 450,
+      500,
+      550, 600, 650, 715 };
 
   cv::Mat dispOutput;
   src.copyTo(dispOutput);
+  int w = src.cols;
+  int h = src.rows;
 
   // **** Lane 1 **** //
 
@@ -421,7 +425,7 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
             << " " << laneOneCoeff[2] << std::endl;
 
   // Put in the first point of the lane i.e. starting coordinate
-  std::vector<cv::Point> laneOnePoints = { laneOneSC };
+  std::vector<cv::Point> laneOnePoints = { };
 
   // Iterate through all the points
   for (int i = 0; i < yaxis.size(); i++) {
@@ -439,6 +443,15 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
   }
   std::cout << std::endl;
 
+  // PLot the curve
+  const cv::Point *pts1 = (const cv::Point*) cv::Mat(laneOnePoints).data;
+  int npts1 = cv::Mat(laneOnePoints).rows;
+  std::cout << "Number of left line vertices: " << npts1 << std::endl;
+  cv::polylines(dispOutput, &pts1, &npts1, 1, false, cv::Scalar(153, 255, 153),
+                10);
+//  delete pts1;
+
+
   // **** Lane 2 **** //
 
   // Find the start coordinate
@@ -451,7 +464,7 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
             << laneTwoCoeff[1] << " " << laneTwoCoeff[2] << std::endl;
 
   // Put in the first point of the lane i.e. starting coordinate
-  std::vector<cv::Point> laneTwoPoints = { laneTwoSC };
+  std::vector<cv::Point> laneTwoPoints = { };
 
   // Iterate through all the points
   for (int i = 0; i < yaxis.size(); i++) {
@@ -469,7 +482,19 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
   }
   std::cout << std::endl;
 
-  imshow("Out", dispOutput);
+  // PLot the curve
+  const cv::Point *pts2 = (const cv::Point*) cv::Mat(laneTwoPoints).data;
+  int npts2 = cv::Mat(laneTwoPoints).rows;
+  std::cout << "Number of right line vertices: " << npts2 << std::endl;
+  cv::polylines(dispOutput, &pts2, &npts2, 1, false, cv::Scalar(153, 255, 153),
+                10);
+//  delete pts2;
+
+  cv::Mat unwarpedOutput;
+  dispOutput.copyTo(unwarpedOutput);
+  cv::warpPerspective(src, unwarpedOutput, inv, cv::Size(w, h));
+
+  imshow("Out", unwarpedOutput);
 
 }
 
@@ -493,7 +518,7 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
   int frameNumber = 0;
 
   for (;;) {
-    std::cout << "Frame number: " << frameNumber << std::endl;
+    std::cout << "\nFrame number: " << frameNumber << std::endl;
     cv::Mat frame, whiteThreshold, yellowThreshold, combinedThreshold,
         gaussianBlurImage, ROIImage, warpedImage, undistortedImage, laneColor;
     cap >> frame;
@@ -535,10 +560,9 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     // curveFlag = 1: Straight Line
     // curveFlag = 2: 2nd order polynomial fit
     extractLanes(warpedImage, laneColor, leftLane, rightLane, 2);
-//    extractLanes(warpedImage, 2);
 
     // Step 7: Display the output
-    displayOutput(laneColor, leftLane, rightLane, 0.0);
+    displayOutput(laneColor, leftLane, rightLane, 0.0, invtransformMatrix);
 
     cv::Mat combined;
     hconcat(grayscaleImage, warpedImage, combined);
