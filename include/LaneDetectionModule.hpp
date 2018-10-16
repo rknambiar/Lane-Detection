@@ -146,7 +146,8 @@ public:
 	   *   @param heading to get Drive heading for output
 	   *   @return nothing
 	   */
-  void displayOutput(const cv::Mat& src, Lane& lane1, Lane& lane2,
+  void displayOutput(const cv::Mat& src, cv::Mat& src2, Lane& lane1,
+                     Lane& lane2,
                      double heading, cv::Mat inv);
 
   /**

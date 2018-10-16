@@ -239,7 +239,7 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
     cv::Point tl(tlX, tlY);
     cv::Point br(brX, brY);
 
-    cv::rectangle(colorLane, tl, br, cv::Scalar(0, 255, 204), 1);
+    cv::rectangle(colorLane, tl, br, cv::Scalar(0, 255, 204), 3);
 
     // Create a temporary vector to store the x's for next box
     std::vector<int> nextX;
@@ -288,7 +288,7 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
     cv::Point tl(tlX, tlY);
     cv::Point br(brX, brY);
 
-    cv::rectangle(colorLane, tl, br, cv::Scalar(0, 255, 204), 1);
+    cv::rectangle(colorLane, tl, br, cv::Scalar(0, 255, 204), 3);
 
     // Create a temporary vector to store the x's for next box
     std::vector<int> nextX;
@@ -344,7 +344,7 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
   cv::circle(colorLane, cv::Point(maxRightIndex, bottomHeight), 10,
              cv::Scalar(0, 0, 125), -1);
 
-  cv::imshow("Lane center", colorLane);
+//  cv::imshow("Lane center", colorLane);
 
 //  std::this_thread::sleep_for(std::chrono::seconds(1));
 }
@@ -400,7 +400,8 @@ double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2) {
  *   @param heading to get Drive heading for output
  *   @return nothing
  */
-void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
+void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
+                                        Lane& lane1,
                                         Lane& lane2, double heading,
                                         cv::Mat inv) {
   std::vector<int> yaxis = { 15, 50, 100, 150, 200, 250, 300, 350, 400, 450,
@@ -435,6 +436,11 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
     laneOnePoints.push_back(cv::Point(x, yaxis[i]));
     cv::circle(dispOutput, cv::Point(x, yaxis[i]), 10, cv::Scalar(125, 0, 125),
                -1);
+    cv::arrowedLine(dispOutput, cv::Point(x + 400, yaxis[i] + 30),
+                    cv::Point(x + 400, yaxis[i]), cv::Scalar(255, 255, 0),
+                    6, 8,
+                    0, 0.8);
+
   }
 
   std::cout << "Lane left points: \n";
@@ -490,11 +496,29 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
                 10);
 //  delete pts2;
 
-  cv::Mat unwarpedOutput;
-  dispOutput.copyTo(unwarpedOutput);
-  cv::warpPerspective(src, unwarpedOutput, inv, cv::Size(w, h));
+  cv::Mat unwarpedOutput, unwarpedColor;
+  cv::warpPerspective(dispOutput, unwarpedOutput, inv, cv::Size(w, h));
+  unwarpedOutput.copyTo(unwarpedColor);
 
-  imshow("Out", unwarpedOutput);
+//  std::cout << "Size: " << unwarpedOutput.size() << std::endl;
+
+  // Combine both the output images (Opencv has a method?)
+  for (int i = 0; i < w; i++) {
+    for (int j = 0; j < h; j++) {
+      if ((unwarpedColor.at<cv::Vec3b>(j, i)[0] == 0)
+          && (unwarpedColor.at<cv::Vec3b>(j, i)[1] == 0)
+          && (unwarpedColor.at<cv::Vec3b>(j, i)[2] == 0)) {
+        unwarpedColor.at<cv::Vec3b>(j, i)[0] =
+            src2.at<cv::Vec3b>(j, i)[0];
+        unwarpedColor.at<cv::Vec3b>(j, i)[1] =
+            src2.at<cv::Vec3b>(j, i)[1];
+        unwarpedColor.at<cv::Vec3b>(j, i)[2] =
+            src2.at<cv::Vec3b>(j, i)[2];
+      }
+    }
+  }
+
+  imshow("Lane Detection", unwarpedColor);
 
 }
 
@@ -520,7 +544,8 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
   for (;;) {
     std::cout << "\nFrame number: " << frameNumber << std::endl;
     cv::Mat frame, whiteThreshold, yellowThreshold, combinedThreshold,
-        gaussianBlurImage, ROIImage, warpedImage, undistortedImage, laneColor;
+        distColor, gaussianBlurImage, ROIImage, warpedImage, undistortedImage,
+        laneColor;
     cap >> frame;
 
     if (frame.empty()) {
@@ -562,11 +587,12 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     extractLanes(warpedImage, laneColor, leftLane, rightLane, 2);
 
     // Step 7: Display the output
-    displayOutput(laneColor, leftLane, rightLane, 0.0, invtransformMatrix);
+    displayOutput(laneColor, frame, leftLane, rightLane, 0.0,
+                  invtransformMatrix);
 
     cv::Mat combined;
     hconcat(grayscaleImage, warpedImage, combined);
-    imshow("Lane Detection", combined);
+//    imshow("Lane Detection", combined);
 
     frameNumber++;
     if (cv::waitKey(30) >= 0)
