@@ -133,7 +133,7 @@ public:
 	   *   @param lane2 object of class lane to store line characteristic.
 	   *   @return double value of drive head.
 	   */
-	double getDriveHeading(Lane& lane1,Lane& lane2);
+  double getDriveHeading(Lane& lane1, Lane& lane2, std::string& direction);
 
   /**
 	   *   @brief Method displayOutput to calculate
@@ -147,8 +147,7 @@ public:
 	   *   @return nothing
 	   */
   void displayOutput(const cv::Mat& src, cv::Mat& src2, Lane& lane1,
-                     Lane& lane2,
-                     double heading, cv::Mat inv);
+                     Lane& lane2, cv::Mat inv);
 
   /**
 	   *   @brief Method detectLane check if program is successfully running

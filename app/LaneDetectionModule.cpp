@@ -385,8 +385,47 @@ void LaneDetectionModule::fitPoly(const std::vector<cv::Point>& src,
  *   @param lane2 object of class lane to store line characteristic.
  *   @return double value of drive head.
  */
-double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2) {
-  return 0.0;
+double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2,
+                                            std::string& direction) {
+  // Get lane 1
+  std::vector<float> laneOneCoeff = lane1.getPolyCoeff();
+
+  // Variables to take the slope of lane 1
+  cv::Point2d top, bottom;
+  top.y = 20;
+  bottom.y = 700;
+
+  // Get top x co-ordinate for y = 20
+  top.x = pow(top.y, 2) * laneOneCoeff[2] + pow(top.y, 1) * laneOneCoeff[1]
+      + laneOneCoeff[0];
+
+  // Get bottom x co-ordinate for y = 700;
+  bottom.x = pow(bottom.y, 2) * laneOneCoeff[2]
+      + pow(bottom.y, 1) * laneOneCoeff[1] + laneOneCoeff[0];
+
+  // Calculate slope
+  double slope = atan((top.y - bottom.y) / (top.x - bottom.x)) * 180
+      / 3.14159265;
+
+  double modifiedSlope;
+  // We get negative slope to the right and positive slope to the left
+  // Thats because of opencv coordinate system
+  if (slope > -85 && slope < 0) {
+    // Negative case ie turn right. Slope changed to positive for right
+    modifiedSlope = 90 + slope;
+    direction = "Turn right";
+  }
+  else if (slope < 85 && slope > 0) {
+    // Positive case ie turn left. Slope changed to negative for left
+    modifiedSlope = slope - 90;
+    direction = "Turn left";
+  }
+  else {
+    modifiedSlope = modifiedSlope / 0.5;
+    direction = "Head straight driver";
+  }
+
+  return modifiedSlope;
 }
 
 /**
@@ -402,7 +441,7 @@ double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2) {
  */
 void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
                                         Lane& lane1,
-                                        Lane& lane2, double heading,
+                                        Lane& lane2,
                                         cv::Mat inv) {
   std::vector<int> yaxis = { 15, 50, 100, 150, 200, 250, 300, 350, 400, 450,
       500,
@@ -444,7 +483,7 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
   }
 
   std::cout << "Lane left points: \n";
-  for (int i = 0; i < laneOnePoints.size(); i++) {
+  for (size_t i = 0; i < laneOnePoints.size(); i++) {
     std::cout << laneOnePoints[i] << " ";
   }
   std::cout << std::endl;
@@ -518,6 +557,26 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
     }
   }
 
+  // Get drive heading
+  std::string direction;
+  double heading = getDriveHeading(lane1, lane2, direction);
+
+  // Setting precision to two decimals
+  heading = (int) (100 * heading) / 100.0;
+  std::string headStr = std::to_string(heading);
+  for (std::string::size_type s = headStr.length() - 1; s > 0; --s) {
+    if (headStr[s] == '0')
+      headStr.erase(s, 1);
+    else
+      break;
+  }
+  std::string result = "Drive angle: " + headStr + " degrees";
+
+  cv::putText(unwarpedColor, result, cv::Point(500, 50),
+              cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
+  cv::putText(unwarpedColor, direction, cv::Point(600, 100),
+              cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
+
   imshow("Lane Detection", unwarpedColor);
 
 }
@@ -587,7 +646,7 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     extractLanes(warpedImage, laneColor, leftLane, rightLane, 2);
 
     // Step 7: Display the output
-    displayOutput(laneColor, frame, leftLane, rightLane, 0.0,
+    displayOutput(laneColor, frame, leftLane, rightLane,
                   invtransformMatrix);
 
     cv::Mat combined;
