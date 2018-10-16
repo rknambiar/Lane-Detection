@@ -87,7 +87,26 @@ void Lane::setStatus(bool flag) {
 }
 
 void Lane::setPolyCoeff(cv::Mat laneCoeff) {
-  polyCoeff.push_back(laneCoeff.at<float>(0, 0));
-  polyCoeff.push_back(laneCoeff.at<float>(1, 0));
-  polyCoeff.push_back(laneCoeff.at<float>(2, 0));
+  polyCoeff.clear();
+  if (polyCoeff.empty()) {
+    polyCoeff.push_back(laneCoeff.at<float>(0, 0));
+    polyCoeff.push_back(laneCoeff.at<float>(1, 0));
+    polyCoeff.push_back(laneCoeff.at<float>(2, 0));
+  }
+  else {
+    std::cout << "Could not insert new elements!" << std::endl;
+  }
+
+}
+
+cv::Point Lane::getStartCoordinate() {
+  return startCoordinates;
+}
+
+bool Lane::getStatus() {
+  return status;
+}
+
+std::vector<float> Lane::getPolyCoeff() {
+  return polyCoeff;
 }

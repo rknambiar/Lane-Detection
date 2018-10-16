@@ -70,9 +70,15 @@ class Lane {
 
   void setStartCoordinate(cv::Point point);
 
+  cv::Point getStartCoordinate();
+
   void setStatus(bool flag);
 
+  bool getStatus();
+
   void setPolyCoeff(cv::Mat coeff);
+
+  std::vector<float> getPolyCoeff();
 };
 
 #endif /* TRAFFIC_LANE_H_ */

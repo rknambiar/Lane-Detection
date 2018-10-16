@@ -161,13 +161,14 @@ void LaneDetectionModule::transformPerspective(const cv::Mat& src,
  *   @param curveFlag to set degree of curve
  *   @return nothing
  */
-void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
-                                       Lane& lane2, int curveFlag) {
+void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
+                                       Lane& lane1, Lane& lane2,
+                                       int curveFlag) {
   int w = src.cols;
   int h = src.rows;
 
-  std::cout << "Image size to extract with col: " << w << " row: " << h
-            << std::endl;
+//  std::cout << "Image size to extract with col: " << w << " row: " << h
+//            << std::endl;
 
   // Height to start the sliding windows
   int padding = 10;
@@ -175,7 +176,7 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
   int bottomWidth = w - padding;
 
   // Convert the gray src image to bgr for plotting colors(3-channel)
-  cv::Mat colorLane;
+//  cv::Mat colorLane;
   cv::cvtColor(src, colorLane, CV_GRAY2BGR);
 
   // Create a mask for bottom half to get the histograms
@@ -212,9 +213,9 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
   int windowCount = 9;
   int windowHeight = (h - padding) / windowCount;
   int windowWidth = windowHeight * 2;
-  std::cout << "Sliding window parameters: count: " << windowCount
-            << " height: " << windowHeight << " width: " << windowWidth
-            << std::endl;
+//  std::cout << "Sliding window parameters: count: " << windowCount
+//            << " height: " << windowHeight << " width: " << windowWidth
+//            << std::endl;
 
   // Left Lane ***********************************************************
   int currentHeight = bottomHeight;
@@ -318,15 +319,12 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, Lane& lane1,
   cv::Mat leftLaneParams = cv::Mat::zeros(curveFlag + 1, 1, CV_64F);
   cv::Mat rightLaneParams = cv::Mat::zeros(curveFlag + 1, 1, CV_64F);
 
-  std::cout << "Right params: " << rightLane.size() << "Left params: "
-            << leftLane.size() << std::endl;
+//  std::cout << "Right params: " << rightLane.size() << "Left params: "
+//            << leftLane.size() << std::endl;
 
   // Call the fitpoly function
   fitPoly(leftLane, leftLaneParams, curveFlag);
   fitPoly(rightLane, rightLaneParams, curveFlag);
-
-  std::cout << "Left lane: " << leftLaneParams << std::endl;
-  std::cout << "Right lane: " << rightLaneParams << std::endl;
 
   // Assign to the lane object and set params
   lane1.setPolyCoeff(leftLaneParams);
@@ -355,8 +353,6 @@ void LaneDetectionModule::fitPoly(const std::vector<cv::Point>& src,
                                   cv::Mat& dst, int order) {
   cv::Mat x = cv::Mat(src.size(), 1, CV_32F);
   cv::Mat y = cv::Mat(src.size(), 1, CV_32F);
-
-  std::cout << "Input size: " << src.size();
 
   // Add all the points to the mat
   for (int i = 0; i < src.size(); i++) {
@@ -406,6 +402,75 @@ double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2) {
  */
 void LaneDetectionModule::displayOutput(const cv::Mat& src, Lane& lane1,
  Lane& lane2, double heading) {
+  std::vector<int> yaxis = { 50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
+      550, 600, 650, 700 };
+
+  cv::Mat dispOutput;
+  src.copyTo(dispOutput);
+
+  // **** Lane 1 **** //
+
+  // Find the start coordinate
+  cv::Point laneOneSC = lane1.getStartCoordinate();
+  std::cout << "Left lane start coordinate: " << laneOneSC
+            << std::endl;
+
+  // Find the points for drawing polynomial
+  std::vector<float> laneOneCoeff = lane1.getPolyCoeff();
+  std::cout << "Left lane params: " << laneOneCoeff[0] << " " << laneOneCoeff[1]
+            << " " << laneOneCoeff[2] << std::endl;
+
+  // Put in the first point of the lane i.e. starting coordinate
+  std::vector<cv::Point> laneOnePoints = { laneOneSC };
+
+  // Iterate through all the points
+  for (int i = 0; i < yaxis.size(); i++) {
+    // Calculate the x values for the y's
+    int x = pow(yaxis[i], 2) * laneOneCoeff[2]
+        + pow(yaxis[i], 1) * laneOneCoeff[1] + laneOneCoeff[0];
+    laneOnePoints.push_back(cv::Point(x, yaxis[i]));
+    cv::circle(dispOutput, cv::Point(x, yaxis[i]), 10, cv::Scalar(125, 0, 125),
+               -1);
+  }
+
+  std::cout << "Lane left points: \n";
+  for (int i = 0; i < laneOnePoints.size(); i++) {
+    std::cout << laneOnePoints[i] << " ";
+  }
+  std::cout << std::endl;
+
+  // **** Lane 2 **** //
+
+  // Find the start coordinate
+  cv::Point laneTwoSC = lane2.getStartCoordinate();
+  std::cout << "Right lane start coordinate: " << laneTwoSC << std::endl;
+
+  // Find the points for drawing polynomial
+  std::vector<float> laneTwoCoeff = lane2.getPolyCoeff();
+  std::cout << "Right lane params: " << laneTwoCoeff[0] << " "
+            << laneTwoCoeff[1] << " " << laneTwoCoeff[2] << std::endl;
+
+  // Put in the first point of the lane i.e. starting coordinate
+  std::vector<cv::Point> laneTwoPoints = { laneTwoSC };
+
+  // Iterate through all the points
+  for (int i = 0; i < yaxis.size(); i++) {
+    // Calculate the x values for the y's
+    int x = pow(yaxis[i], 2) * laneTwoCoeff[2]
+        + pow(yaxis[i], 1) * laneTwoCoeff[1] + laneTwoCoeff[0];
+    laneTwoPoints.push_back(cv::Point(x, yaxis[i]));
+    cv::circle(dispOutput, cv::Point(x, yaxis[i]), 10, cv::Scalar(125, 0, 125),
+               -1);
+  }
+
+  std::cout << "Lane right points: \n";
+  for (int i = 0; i < laneTwoPoints.size(); i++) {
+    std::cout << laneTwoPoints[i] << " ";
+  }
+  std::cout << std::endl;
+
+  imshow("Out", dispOutput);
+
 }
 
 /**
@@ -430,7 +495,7 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
   for (;;) {
     std::cout << "Frame number: " << frameNumber << std::endl;
     cv::Mat frame, whiteThreshold, yellowThreshold, combinedThreshold,
-        gaussianBlurImage, ROIImage, warpedImage, undistortedImage;
+        gaussianBlurImage, ROIImage, warpedImage, undistortedImage, laneColor;
     cap >> frame;
 
     if (frame.empty()) {
@@ -469,15 +534,18 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     // Step 6: Get the lane parameters
     // curveFlag = 1: Straight Line
     // curveFlag = 2: 2nd order polynomial fit
-    extractLanes(warpedImage, leftLane, rightLane, 2);
+    extractLanes(warpedImage, laneColor, leftLane, rightLane, 2);
 //    extractLanes(warpedImage, 2);
+
+    // Step 7: Display the output
+    displayOutput(laneColor, leftLane, rightLane, 0.0);
 
     cv::Mat combined;
     hconcat(grayscaleImage, warpedImage, combined);
     imshow("Lane Detection", combined);
 
     frameNumber++;
-    if (cv::waitKey(100) >= 0)
+    if (cv::waitKey(30) >= 0)
       break;
   }
   // the camera will be deinitialized automatically in VideoCapture destructor

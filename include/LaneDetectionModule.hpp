@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <cmath>
 #include <opencv2/opencv.hpp>
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -116,7 +117,7 @@ public:
 	   *   @param curveFlag to set degree of curve
 	   *   @return nothing
 	   */
-  void extractLanes(const cv::Mat& src, Lane& lane1, Lane& lane2,
+  void extractLanes(const cv::Mat& src, cv::Mat& dst, Lane& lane1, Lane& lane2,
                     int curveFlag);
 
   void extractLanes(const cv::Mat& src, int curveFlag);
