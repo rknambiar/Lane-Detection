@@ -39,7 +39,7 @@
 #include "LaneDetectionModule.hpp"
 #include "opencv2/opencv.hpp"
 
-// Lane module object
+// LaneDetectionModule module object
 LaneDetectionModule laneModule;
 
 /**
@@ -132,4 +132,26 @@ TEST(GetSetTest, SetYellowMax) {
   laneModule.setYellowMax(cv::Scalar(150, 150, 150));
   cv::Scalar highTheshold = laneModule.getYellowMax();
   ASSERT_EQ(highTheshold, cv::Scalar(150, 150, 150));
+}
+
+/**
+ *@brief Test for single image execution..
+ *
+ *@param FunctionalTest   Get set function test
+ *@param TestImage        Name of the unit test
+ */
+TEST(FunctionalTest, TestImage) {
+  bool status = laneModule.detectLane("../input/ColorImage.jpg");
+  ASSERT_EQ(status, true);
+}
+
+/**
+ *@brief Test for false image path.
+ *
+ *@param FunctionalTest     Get set function test
+ *@param TestFalseImagePath Name of the unit test
+ */
+TEST(FunctionalTest, TestFalseImagePath) {
+  bool status = laneModule.detectLane("../input/ColorImage1.jpg");
+  ASSERT_EQ(status, false);
 }

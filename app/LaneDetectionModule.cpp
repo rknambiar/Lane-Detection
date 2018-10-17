@@ -14,29 +14,20 @@
  */
 
 #include "LaneDetectionModule.hpp"
-#include "Lane.cpp"
 
 /**
  *   @brief Default constructor for LaneDetectionModule
- *
- *
- *   @param nothing
- *   @return nothi
  */
 LaneDetectionModule::LaneDetectionModule() {
   yellowMin = cv::Scalar(20, 100, 100);  // yellow lane min threshold
   yellowMax = cv::Scalar(30, 255, 255);  // yellow lane max threshold
   grayscaleMin = 200;  // white lane min threshold
   grayscaleMax = 255;  // white lane max threshold
-  videoName = "xyz.mp4";  // specify video name
+  videoName = "xyz.mp4";  // specify default video name
 }
 
 /**
  *   @brief Default destructor for LaneDetectionModule
- *
- *
- *   @param nothing
- *   @return nothing
  */
 LaneDetectionModule::~LaneDetectionModule() {
 }
@@ -44,13 +35,10 @@ LaneDetectionModule::~LaneDetectionModule() {
 /**
  *   @brief Method Undistortedimage for LaneDetectionModule
  *
- *
  *   @param src is a Matrix of source of image
  *   @param dst is a Matrix of destination of image
- *   @return nothing
  */
 void LaneDetectionModule::undistortImage(const cv::Mat& src, cv::Mat& dst) {
-
   cv::Mat cameraMatrix =
       (cv::Mat_<double>(3, 3) << 1154.22732, 0.0, 671.627794, 0.0, 1148.18221, 386.046312, 0.0, 0.0, 1.0);
 
@@ -62,15 +50,13 @@ void LaneDetectionModule::undistortImage(const cv::Mat& src, cv::Mat& dst) {
 
 /**
  *   @brief Method thresholdImageY to set
- *   		  yellow threshold image for LaneDetectionModule
- *
+ *          yellow threshold image for LaneDetectionModule
  *
  *   @param src is a Matrix of source of image
  *   @param dst is a Matrix of destination of image
- *   @return nothing
  */
 void LaneDetectionModule::thresholdImageY(const cv::Mat& src, cv::Mat& dst) {
-  // Convert to grayscale image
+  // Image to HLS type image for decreasing effect of light intensity.
   cv::cvtColor(src, dst, cv::COLOR_BGR2HLS);
 
   // use white thresholding values to detect only road lanes
@@ -79,12 +65,10 @@ void LaneDetectionModule::thresholdImageY(const cv::Mat& src, cv::Mat& dst) {
 
 /**
  *   @brief Method thresholdImageW to set
- *   		white threshold image for LaneDetectionModule
- *
+ *          white threshold image for LaneDetectionModule
  *
  *   @param src is a Matrix of source of image
  *   @param dst is a Matrix of destination of image
- *   @return nothing
  */
 void LaneDetectionModule::thresholdImageW(const cv::Mat& src, cv::Mat& dst) {
   // Convert to grayscale image
@@ -96,19 +80,18 @@ void LaneDetectionModule::thresholdImageW(const cv::Mat& src, cv::Mat& dst) {
 
 /**
  *   @brief Method extractROI to set
- *   		  region of interest for LaneDetectionModule
- *
+ *          region of interest for LaneDetectionModule
  *
  *   @param src is a Matrix of source of image
  *   @param dst is a Matrix of destination of image
- *   @return nothing
  */
 void LaneDetectionModule::extractROI(const cv::Mat& src, cv::Mat& dst) {
-  int width = src.cols;
-  int height = src.rows;
+  int width = src.cols;  // width of recieved frame.
+  int height = src.rows;  // height of recieved frame.
 
+//  mask matrix initialized as zero Matrix of Height and Width of frame matrix.
   cv::Mat mask = cv::Mat::zeros(height, width, CV_8U);
-  // Make corners for the mask
+  // Make corners points for the mask.
   cv::Point pts[4] = { cv::Point(0, height), cv::Point(width / 2 - 100,
                                                        height / 2 + 50),
       cv::Point(width / 2 + 100, height / 2 + 50), cv::Point(width, height) };
@@ -120,8 +103,16 @@ void LaneDetectionModule::extractROI(const cv::Mat& src, cv::Mat& dst) {
   bitwise_and(src, mask, dst);
 }
 
-void LaneDetectionModule::transformPerspective(const cv::Mat& src,
-                                               cv::Mat& dst,
+/**
+ *   @brief Method transforming perspective of lane image
+ *
+ *
+ *   @param src is a Matrix of source of image
+ *   @param dst is a Matrix of destination of image
+ *   @param Tm is the transformation matrix for perspective
+ *   @param invTm is the inverse of the transformation matrix
+ */
+void LaneDetectionModule::transformPerspective(const cv::Mat& src, cv::Mat& dst,
                                                cv::Mat& Tm, cv::Mat& invTm) {
   int w = src.cols;
   int h = src.rows;
@@ -133,8 +124,7 @@ void LaneDetectionModule::transformPerspective(const cv::Mat& src,
   cv::Point2f start[4] = { cv::Point2f(w, h - 10), cv::Point2f(0, h - 10),
       cv::Point2f(546, 460), cv::Point2f(732, 460) };
 
-  cv::Point2f end[4] = { cv::Point2f(w, h), cv::Point2f(0, h),
-      cv::Point2f(0,
+  cv::Point2f end[4] = { cv::Point2f(w, h), cv::Point2f(0, h), cv::Point2f(0,
                                                                            0),
       cv::Point2f(w, 0) };
 
@@ -142,24 +132,18 @@ void LaneDetectionModule::transformPerspective(const cv::Mat& src,
   invTm = getPerspectiveTransform(end, start);
 
   cv::warpPerspective(src, dst, Tm, cv::Size(w, h));
-
-//  circle(dst, end[0], 5, Scalar(0, 0, 125), -1);
-//  circle(dst, end[1], 5, Scalar(0, 0, 125), -1);
-//  circle(dst, end[2], 5, Scalar(0, 0, 125), -1);
-//  circle(dst, end[3], 5, Scalar(0, 0, 125), -1);
 }
 
 /**
  *   @brief Method extractLanes to calculate
- *   		  parameters of lines and its characteristics
- *   		  for LaneDetectionModule.
+ *          parameters of lines and its characteristics
+ *          for LaneDetectionModule.
  *
  *   @param src is a Matrix of source of image
  *   @param dst is a Matrix of destination of image
  *   @param lane1 object of class lane to store line characteristic.
  *   @param lane2 object of class lane to store line characteristic
  *   @param curveFlag to set degree of curve
- *   @return nothing
  */
 void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
                                        Lane& lane1, Lane& lane2,
@@ -202,7 +186,8 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
 
   maxRightIndex = maxRightIndex + halfSize;
 
-  // Normalize the right lane as there are breaks in the lane-Optional for stability
+  // Normalize the right lane as there are breaks in the
+  // lane-Optional for stability
   maxRightIndex = lane2.getStableCenter(maxRightIndex);
 
   // Declare vectors of Point for storing lane points
@@ -219,10 +204,9 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
 
   // Left Lane ***********************************************************
   int currentHeight = bottomHeight;
-  //Assign start coordinates
+  // Assign start coordinates
   lane1.setStartCoordinate(cv::Point(maxLeftIndex, currentHeight));
   for (int i = 0; i < windowCount; i++) {
-
     // Get the top left and bottom right point to make a rectangle
     int tlX = maxLeftIndex - windowWidth / 2;
     int tlY = currentHeight - windowHeight;
@@ -268,10 +252,9 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
 
   // Right Lane ****************************************************
   currentHeight = bottomHeight;
-  //Assign start coordinates
+  // Assign start coordinates
   lane2.setStartCoordinate(cv::Point(maxRightIndex, currentHeight));
   for (int i = 0; i < windowCount; i++) {
-
     // Get the top left and bottom right point to make a rectangle
     int tlX = maxRightIndex - windowWidth / 2;
     int tlY = currentHeight - windowHeight;
@@ -334,7 +317,6 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
   lane1.setStatus(true);
   lane2.setStatus(true);
 
-
   /* All the plotting part below this line - Not necessary for program working
    * Create a copy of the input src image for plotting purposes
    */
@@ -345,19 +327,26 @@ void LaneDetectionModule::extractLanes(const cv::Mat& src, cv::Mat& colorLane,
              cv::Scalar(0, 0, 125), -1);
 
 //  cv::imshow("Lane center", colorLane);
-
-//  std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
+/**
+ *   @brief Method fitPoly fits a 2nd order polynomial to the points
+ *   on the lane
+ *
+ *   @param src is the input image from previous step
+ *   @param dst is the destination Mat to store the coefficients of the
+ *          polynomial
+ *   @param order is the order of polynomial
+ */
 void LaneDetectionModule::fitPoly(const std::vector<cv::Point>& src,
                                   cv::Mat& dst, int order) {
   cv::Mat x = cv::Mat(src.size(), 1, CV_32F);
   cv::Mat y = cv::Mat(src.size(), 1, CV_32F);
 
   // Add all the points to the mat
-  for (int i = 0; i < src.size(); i++) {
-    x.at<float>(i, 0) = (float) src[i].x;
-    y.at<float>(i, 0) = (float) src[i].y;
+  for (size_t i = 0; i < src.size(); i++) {
+    x.at<float>(i, 0) = static_cast<float>(src[i].x);
+    y.at<float>(i, 0) = static_cast<float>(src[i].y);
   }
 
   int npoints = x.checkVector(1);
@@ -378,51 +367,53 @@ void LaneDetectionModule::fitPoly(const std::vector<cv::Point>& src,
 
 /**
  *   @brief Method getDriveHeading to calculate
- *   		  drive heading to be given to actuator for further action
- *   		  in LaneDetectionModule.
+ *          drive heading to be given to actuator for further action
+ *          in LaneDetectionModule.
  *
  *   @param lane1 object of class lane to store line characteristic.
  *   @param lane2 object of class lane to store line characteristic.
- *   @return double value of drive head.
+ *   @param direction is the string object to hold direction left etc.
+ *
+ *   @return value of drive head.
  */
 double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2,
                                             std::string& direction) {
-  // Get lane 1
-  std::vector<float> laneOneCoeff = lane1.getPolyCoeff();
+  double modifiedSlope = 0;
+  if (lane1.getStatus() && lane2.getStatus()) {
+    // Get lane 1
+    std::vector<float> laneOneCoeff = lane1.getPolyCoeff();
 
-  // Variables to take the slope of lane 1
-  cv::Point2d top, bottom;
-  top.y = 20;
-  bottom.y = 700;
+    // Variables to take the slope of lane 1
+    cv::Point2d top, bottom;
+    top.y = 20;
+    bottom.y = 700;
 
-  // Get top x co-ordinate for y = 20
-  top.x = pow(top.y, 2) * laneOneCoeff[2] + pow(top.y, 1) * laneOneCoeff[1]
-      + laneOneCoeff[0];
+    // Get top x co-ordinate for y = 20
+    top.x = pow(top.y, 2) * laneOneCoeff[2] + pow(top.y, 1) * laneOneCoeff[1]
+        + laneOneCoeff[0];
 
-  // Get bottom x co-ordinate for y = 700;
-  bottom.x = pow(bottom.y, 2) * laneOneCoeff[2]
-      + pow(bottom.y, 1) * laneOneCoeff[1] + laneOneCoeff[0];
+    // Get bottom x co-ordinate for y = 700;
+    bottom.x = pow(bottom.y, 2) * laneOneCoeff[2]
+        + pow(bottom.y, 1) * laneOneCoeff[1] + laneOneCoeff[0];
 
-  // Calculate slope
-  double slope = atan((top.y - bottom.y) / (top.x - bottom.x)) * 180
-      / 3.14159265;
+    // Calculate slope
+    double slope = atan((top.y - bottom.y) / (top.x - bottom.x)) * 180
+        / 3.14159265;
 
-  double modifiedSlope;
-  // We get negative slope to the right and positive slope to the left
-  // Thats because of opencv coordinate system
-  if (slope > -85 && slope < 0) {
-    // Negative case ie turn right. Slope changed to positive for right
-    modifiedSlope = 90 + slope;
-    direction = "Turn right";
-  }
-  else if (slope < 85 && slope > 0) {
-    // Positive case ie turn left. Slope changed to negative for left
-    modifiedSlope = slope - 90;
-    direction = "Turn left";
-  }
-  else {
-    modifiedSlope = modifiedSlope / 0.5;
-    direction = "Head straight driver";
+    // We get negative slope to the right and positive slope to the left
+    // Thats because of opencv coordinate system
+    if (slope > -85 && slope < 0) {
+      // Negative case ie turn right. Slope changed to positive for right
+      modifiedSlope = 90 + slope;
+      direction = "Turn right";
+    } else if (slope < 85 && slope > 0) {
+      // Positive case ie turn left. Slope changed to negative for left
+      modifiedSlope = slope - 90;
+      direction = "Turn left";
+    } else {
+      modifiedSlope = modifiedSlope / 0.5;
+      direction = "Head straight";
+    }
   }
 
   return modifiedSlope;
@@ -430,22 +421,19 @@ double LaneDetectionModule::getDriveHeading(Lane& lane1, Lane& lane2,
 
 /**
  *   @brief Method displayOutput to calculate
- *   		  to display of the system
- *   		  for LaneDetectionModule.
+ *        to display of the system
+ *        for LaneDetectionModule.
  *
  *   @param src is a Matrix of source of image
+ *   @param src2 is the source color image
  *   @param lane1 object of class lane to store line characteristic.
  *   @param lane2 object of class lane to store line characteristic
- *   @param heading to get Drive heading for output
- *   @return nothing
+ *   @param inv is the inverse perspective transformation matrix
  */
 void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
-                                        Lane& lane1,
-                                        Lane& lane2,
-                                        cv::Mat inv) {
+                                        Lane& lane1, Lane& lane2, cv::Mat inv) {
   std::vector<int> yaxis = { 15, 50, 100, 150, 200, 250, 300, 350, 400, 450,
-      500,
-      550, 600, 650, 715 };
+      500, 550, 600, 650, 715 };
 
   cv::Mat dispOutput;
   src.copyTo(dispOutput);
@@ -455,20 +443,20 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
   // **** Lane 1 **** //
 
   // Find the start coordinate
-  cv::Point laneOneSC = lane1.getStartCoordinate();
-  std::cout << "Left lane start coordinate: " << laneOneSC
-            << std::endl;
+//  cv::Point laneOneSC = lane1.getStartCoordinate();
+//  std::cout << "Left lane start coordinate: " << laneOneSC << std::endl;
 
   // Find the points for drawing polynomial
   std::vector<float> laneOneCoeff = lane1.getPolyCoeff();
-  std::cout << "Left lane params: " << laneOneCoeff[0] << " " << laneOneCoeff[1]
-            << " " << laneOneCoeff[2] << std::endl;
+//  std::cout << "Left lane params: " << laneOneCoeff[0] << " "
+//              << laneOneCoeff[1]
+//            << " " << laneOneCoeff[2] << std::endl;
 
   // Put in the first point of the lane i.e. starting coordinate
   std::vector<cv::Point> laneOnePoints = { };
 
   // Iterate through all the points
-  for (int i = 0; i < yaxis.size(); i++) {
+  for (size_t i = 0; i < yaxis.size(); i++) {
     // Calculate the x values for the y's
     int x = pow(yaxis[i], 2) * laneOneCoeff[2]
         + pow(yaxis[i], 1) * laneOneCoeff[1] + laneOneCoeff[0];
@@ -476,43 +464,40 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
     cv::circle(dispOutput, cv::Point(x, yaxis[i]), 10, cv::Scalar(125, 0, 125),
                -1);
     cv::arrowedLine(dispOutput, cv::Point(x + 400, yaxis[i] + 30),
-                    cv::Point(x + 400, yaxis[i]), cv::Scalar(255, 255, 0),
-                    6, 8,
+                    cv::Point(x + 400, yaxis[i]), cv::Scalar(255, 255, 0), 6, 8,
                     0, 0.8);
-
   }
 
-  std::cout << "Lane left points: \n";
-  for (size_t i = 0; i < laneOnePoints.size(); i++) {
-    std::cout << laneOnePoints[i] << " ";
-  }
-  std::cout << std::endl;
+//  std::cout << "Lane left points: \n";
+//  for (size_t i = 0; i < laneOnePoints.size(); i++) {
+//    std::cout << laneOnePoints[i] << " ";
+//  }
+//  std::cout << std::endl;
 
   // PLot the curve
   const cv::Point *pts1 = (const cv::Point*) cv::Mat(laneOnePoints).data;
   int npts1 = cv::Mat(laneOnePoints).rows;
-  std::cout << "Number of left line vertices: " << npts1 << std::endl;
+//  std::cout << "Number of left line vertices: " << npts1 << std::endl;
   cv::polylines(dispOutput, &pts1, &npts1, 1, false, cv::Scalar(153, 255, 153),
                 10);
-//  delete pts1;
-
+  //  delete pts1;
 
   // **** Lane 2 **** //
 
   // Find the start coordinate
-  cv::Point laneTwoSC = lane2.getStartCoordinate();
-  std::cout << "Right lane start coordinate: " << laneTwoSC << std::endl;
+//  cv::Point laneTwoSC = lane2.getStartCoordinate();
+//  std::cout << "Right lane start coordinate: " << laneTwoSC << std::endl;
 
   // Find the points for drawing polynomial
   std::vector<float> laneTwoCoeff = lane2.getPolyCoeff();
-  std::cout << "Right lane params: " << laneTwoCoeff[0] << " "
-            << laneTwoCoeff[1] << " " << laneTwoCoeff[2] << std::endl;
+//  std::cout << "Right lane params: " << laneTwoCoeff[0] << " "
+//            << laneTwoCoeff[1] << " " << laneTwoCoeff[2] << std::endl;
 
   // Put in the first point of the lane i.e. starting coordinate
   std::vector<cv::Point> laneTwoPoints = { };
 
   // Iterate through all the points
-  for (int i = 0; i < yaxis.size(); i++) {
+  for (size_t i = 0; i < yaxis.size(); i++) {
     // Calculate the x values for the y's
     int x = pow(yaxis[i], 2) * laneTwoCoeff[2]
         + pow(yaxis[i], 1) * laneTwoCoeff[1] + laneTwoCoeff[0];
@@ -521,25 +506,25 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
                -1);
   }
 
-  std::cout << "Lane right points: \n";
-  for (int i = 0; i < laneTwoPoints.size(); i++) {
-    std::cout << laneTwoPoints[i] << " ";
-  }
-  std::cout << std::endl;
+//  std::cout << "Lane right points: \n";
+//  for (size_t i = 0; i < laneTwoPoints.size(); i++) {
+//    std::cout << laneTwoPoints[i] << " ";
+//  }
+//  std::cout << std::endl;
 
   // PLot the curve
   const cv::Point *pts2 = (const cv::Point*) cv::Mat(laneTwoPoints).data;
   int npts2 = cv::Mat(laneTwoPoints).rows;
-  std::cout << "Number of right line vertices: " << npts2 << std::endl;
+//  std::cout << "Number of right line vertices: " << npts2 << std::endl;
   cv::polylines(dispOutput, &pts2, &npts2, 1, false, cv::Scalar(153, 255, 153),
                 10);
-//  delete pts2;
+  //  delete pts2;
 
   cv::Mat unwarpedOutput, unwarpedColor;
   cv::warpPerspective(dispOutput, unwarpedOutput, inv, cv::Size(w, h));
   unwarpedOutput.copyTo(unwarpedColor);
 
-//  std::cout << "Size: " << unwarpedOutput.size() << std::endl;
+  //  std::cout << "Size: " << unwarpedOutput.size() << std::endl;
 
   // Combine both the output images (Opencv has a method?)
   for (int i = 0; i < w; i++) {
@@ -547,12 +532,9 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
       if ((unwarpedColor.at<cv::Vec3b>(j, i)[0] == 0)
           && (unwarpedColor.at<cv::Vec3b>(j, i)[1] == 0)
           && (unwarpedColor.at<cv::Vec3b>(j, i)[2] == 0)) {
-        unwarpedColor.at<cv::Vec3b>(j, i)[0] =
-            src2.at<cv::Vec3b>(j, i)[0];
-        unwarpedColor.at<cv::Vec3b>(j, i)[1] =
-            src2.at<cv::Vec3b>(j, i)[1];
-        unwarpedColor.at<cv::Vec3b>(j, i)[2] =
-            src2.at<cv::Vec3b>(j, i)[2];
+        unwarpedColor.at<cv::Vec3b>(j, i)[0] = src2.at<cv::Vec3b>(j, i)[0];
+        unwarpedColor.at<cv::Vec3b>(j, i)[1] = src2.at<cv::Vec3b>(j, i)[1];
+        unwarpedColor.at<cv::Vec3b>(j, i)[2] = src2.at<cv::Vec3b>(j, i)[2];
       }
     }
   }
@@ -562,7 +544,7 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
   double heading = getDriveHeading(lane1, lane2, direction);
 
   // Setting precision to two decimals
-  heading = (int) (100 * heading) / 100.0;
+  heading = static_cast<int>(100 * heading) / 100.0;
   std::string headStr = std::to_string(heading);
   for (std::string::size_type s = headStr.length() - 1; s > 0; --s) {
     if (headStr[s] == '0')
@@ -570,38 +552,40 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
     else
       break;
   }
-  std::string result = "Drive angle: " + headStr + " degrees";
-
+  std::string result = "Drive angle: " + headStr + " degrees.";
+  std::cout << result << " Action: " << direction << std::endl;
   cv::putText(unwarpedColor, result, cv::Point(500, 50),
               cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
-  cv::putText(unwarpedColor, direction, cv::Point(600, 100),
+  cv::putText(unwarpedColor, direction, cv::Point(550, 100),
               cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
+  cv::putText(unwarpedColor, "Press C to exit.", cv::Point(1000, 50),
+              cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 255), 2);
+  cv::putText(unwarpedColor, "Smart-Lane | ACME Robotics", cv::Point(75, 50),
+              cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(153, 51, 255), 2);
 
   imshow("Lane Detection", unwarpedColor);
-
 }
 
 /**
  *   @brief Method detectLane check if program is successfully running
- *   		  gives bool output for LaneDetectionModule
+ *          gives bool output for LaneDetectionModule
  *
  *   @param videoName is video of source
- *   @return bool for code working.
+ *
+ *   @return Status of lane detection.
  */
 bool LaneDetectionModule::detectLane(std::string videoName) {
   cv::VideoCapture cap(videoName);  // open the default camera
   if (!cap.isOpened())  // check if we succeeded
-    return -1;
+    return 0;
 
+  std::cout << "Starting Smartlane..." << std::endl;
   cv::namedWindow("Lane Detection", 1);
-  cv::namedWindow("Cropped", 1);
-  cv::moveWindow("Cropped", 20, 20);
 
-  Lane leftLane(2, "red", 10), rightLane(2, "blue", 10);
+  Lane leftLane(2, "red", 10), rightLane(2, "green", 10);
   int frameNumber = 0;
 
   for (;;) {
-    std::cout << "\nFrame number: " << frameNumber << std::endl;
     cv::Mat frame, whiteThreshold, yellowThreshold, combinedThreshold,
         distColor, gaussianBlurImage, ROIImage, warpedImage, undistortedImage,
         laneColor;
@@ -611,6 +595,7 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
       return true;
     }
 
+    std::cout << "Frame number: " << frameNumber << " : ";
     // Step 1: Undistort the input image given camera params
     undistortImage(frame, undistortedImage);
 
@@ -646,49 +631,46 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
     extractLanes(warpedImage, laneColor, leftLane, rightLane, 2);
 
     // Step 7: Display the output
-    displayOutput(laneColor, frame, leftLane, rightLane,
-                  invtransformMatrix);
+    displayOutput(laneColor, frame, leftLane, rightLane, invtransformMatrix);
 
+    // Display routine
     cv::Mat combined;
-    hconcat(grayscaleImage, warpedImage, combined);
+    hconcat(grayscaleImage, ROIImage, combined);
 //    imshow("Lane Detection", combined);
-
     frameNumber++;
     if (cv::waitKey(30) >= 0)
       break;
   }
-  // the camera will be deinitialized automatically in VideoCapture destructor
-  return 0;
+  // the camera will be deinitialized automatically in VideoCapture destructor. If
+  // Everything works without error, return true.
+  return true;
 }
 
 /**
- *   @brief Method getYellowMax is to use get max value of yellow
- *   for LaneDetectionModule
+ *   @brief Method getYellowMax is to use get HSL max value of yellow
+ *          for LaneDetectionModule
  *
- *   @param nothing
- *   @return Scalar of RGB set values.
+ *   @return HSL values for yellow lane.
  */
 cv::Scalar LaneDetectionModule::getYellowMax() {
   return yellowMax;
 }
 
 /**
- *   @brief Method getYellowMin is to use get min value of yellow
- *   for LaneDetectionModule
+ *   @brief Method getYellowMin is to use get HSL min value of yellow
+ *          for LaneDetectionModule
  *
- *   @param nothing
- *   @return Scalar of RGB set values.
+ *   @return HSL values for yellow lane.
  */
 cv::Scalar LaneDetectionModule::getYellowMin() {
   return yellowMin;
 }
 
 /**
- *   @brief Method setYellowMax is to use set max value of yellow
- *   for LaneDetectionModule
+ *   @brief Method setYellowMax is to use set HSL max value of yellow
+ *          for LaneDetectionModule
  *
- *   @param  Scalar of RGB values
- *   @return nothing.
+ *   @param  HSL values for yellow lane
  */
 void LaneDetectionModule::setYellowMax(cv::Scalar value) {
   yellowMax = value;
@@ -696,10 +678,9 @@ void LaneDetectionModule::setYellowMax(cv::Scalar value) {
 
 /**
  *   @brief Method setYellowMin is to use set min value of yellow
- *   for LaneDetectionModule
+ *          for LaneDetectionModule
  *
- *   @param  Scalar of RGB values
- *   @return nothing.
+ *   @param  HSL values for yellow lane.
  */
 void LaneDetectionModule::setYellowMin(cv::Scalar value) {
   yellowMin = value;
@@ -707,10 +688,9 @@ void LaneDetectionModule::setYellowMin(cv::Scalar value) {
 
 /**
  *   @brief Method setGrayScaleMax is to use set max value of Gray scale
- *   value for LaneDetectionModule
+ *          value for LaneDetectionModule
  *
- *   @param  int of GrayScale values
- *   @return nothing.
+ *   @param  int of max GrayScale value.
  */
 void LaneDetectionModule::setGrayScaleMax(int value) {
   grayscaleMax = value;
@@ -720,8 +700,7 @@ void LaneDetectionModule::setGrayScaleMax(int value) {
  *   @brief Method setGrayScaleMin is to use set min value of Gray scale
  *   value for LaneDetectionModule
  *
- *   @param  int of GrayScale values
- *   @return nothing.
+ *   @param  int of min GrayScale value
  */
 void LaneDetectionModule::setGrayScaleMin(int value) {
   grayscaleMin = value;
@@ -729,10 +708,9 @@ void LaneDetectionModule::setGrayScaleMin(int value) {
 
 /**
  *   @brief Method getGrayScaleMin is to use get min value of GrayScale
- *   for LaneDetectionModule
+ *          for LaneDetectionModule
  *
- *   @param nothing
- *   @return int of GrayScale values
+ *   @return int of min GrayScale value
  */
 int LaneDetectionModule::getGrayScaleMin() {
   return grayscaleMin;
@@ -742,8 +720,7 @@ int LaneDetectionModule::getGrayScaleMin() {
  *   @brief Method getGrayScaleMax is to use get max value of GrayScale
  *   for LaneDetectionModule
  *
- *   @param nothing
- *   @return int of GrayScale values
+ *   @return int of max GrayScale values
  */
 int LaneDetectionModule::getGrayScaleMax() {
   return grayscaleMax;

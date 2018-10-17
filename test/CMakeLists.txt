@@ -4,7 +4,9 @@ add_executable(
     smartLane-test
     main.cpp
     LaneDetectionModuleTest.cpp
+    LaneTest.cpp
     ../app/LaneDetectionModule.cpp
+    ../app/Lane.cpp
 )
 
 target_include_directories(smartLane-test PUBLIC ../vendor/googletest/googletest/include 
