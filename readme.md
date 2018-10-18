@@ -15,7 +15,7 @@
 
 ## Overview
 
-Lane detection is an important aspect of self driving vehicles. This project aims to build a lane detection system using OpenCV and C++. 
+Lane detection is an important aspect of self driving vehicles. This project aims to build a lane detection system using OpenCV and C++.
 
 Algorithm overview:
 - Filter and threshold for white and yellow lane in gray and HLS color space respectively.
@@ -147,7 +147,7 @@ This generates a index.html page in the build/coverage sub-directory that can be
 
 ## For more info
 
-For more details on the algorithm/approach please feel free to reach out to me at rohit517@terpmail.umd.edu.
+This was developed as a part of ENPM808X Software Development course. For more details on the algorithm/approach please feel free to reach out to me at rohit517@terpmail.umd.edu.
 
 ## License
 ```
