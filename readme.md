@@ -11,7 +11,7 @@
 <img src="https://github.com/rohit517/Lane-Detection/blob/master/output/FinalOutput.jpg" width="640" height="360">
 </p>
 
----
+<br/>
 
 ## Overview
 
