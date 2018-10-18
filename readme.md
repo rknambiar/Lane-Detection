@@ -1,28 +1,127 @@
-# Smart-Lane
-[![Build Status](https://travis-ci.org/dpiet/cpp-boilerplate.svg?branch=master)](https://travis-ci.org/dpiet/cpp-boilerplate)
-[![Coverage Status](https://coveralls.io/repos/github/dpiet/cpp-boilerplate/badge.svg?branch=master)](https://coveralls.io/github/dpiet/cpp-boilerplate?branch=master)
+# Lane Detection using OpenCV and C++
+[![Build Status](https://travis-ci.org/rohit517/Lane-Detection.svg?branch=master)](https://travis-ci.org/rohit517/Lane-Detection)
+[![Coverage Status](https://coveralls.io/repos/github/rohit517/Lane-Detection/badge.svg?branch=master)](https://coveralls.io/github/rohit517/Lane-Detection?branch=master)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/rohit517/Lane-Detection/blob/master/LICENSE)
 ---
 
 ## Overview
 
-Simple starter C++ project with:
+Lane detection is an important aspect of self driving vehicles. This project aims to build a lane detection system using OpenCV and C++. 
 
+Algorithm overview:
+- Filter and threshold for white and yellow lane in gray and HLS color space respectively.
+- Apply region of interest (ROI) mask on the lower half of the image.
+- Apply perspective transform to get a top-view of the lane.
+- Use sliding window approach to get the left and right lane.
+- Undo the perspective transform and apply the lane markings. 
+
+A step by step video demonstrating the above steps can be found [here](https://www.youtube.com/watch?v=7M99dovhx8M). 
+The algorithm applied on the complete video can be found [here](https://www.youtube.com/watch?v=zJXv4z-9pBo).
+
+## Dependencies
+Lane Detection:
+
+- OpenCV
 - cmake
 - googletest
 
+## OpenCV installation
+
+Update packages
+```
+sudo apt-get update
+sudo apt-get upgrade
+```
+Install required dependencies
+``` 
+sudo apt-get install build-essential checkinstall cmake pkg-config yasm
+sudo apt-get install git gfortran
+sudo apt-get install libjpeg8-dev libjasper-dev libpng12-dev
+ ```
+If you are using Ubuntu 14.04
+```
+sudo apt-get install libtiff4-dev
+```
+If you are using Ubuntu 16.04
+```
+sudo apt-get install libtiff5-dev
+```
+
+```
+sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libdc1394-22-dev
+sudo apt-get install libxine2-dev libv4l-dev
+sudo apt-get install libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
+sudo apt-get install qt5-default libgtk2.0-dev libtbb-dev
+sudo apt-get install libatlas-base-dev
+sudo apt-get install libfaac-dev libmp3lame-dev libtheora-dev
+sudo apt-get install libvorbis-dev libxvidcore-dev
+sudo apt-get install libopencore-amrnb-dev libopencore-amrwb-dev
+sudo apt-get install x264 v4l-utils
+ ```
+Optional dependencies
+```
+sudo apt-get install libprotobuf-dev protobuf-compiler
+sudo apt-get install libgoogle-glog-dev libgflags-dev
+sudo apt-get install libgphoto2-dev libeigen3-dev libhdf5-dev doxygen
+```
+Clone OpenCV and OpenCV_contrib
+```
+git clone https://github.com/opencv/opencv.git
+cd opencv 
+git checkout 3.3.1 
+cd ..
+
+git clone https://github.com/opencv/opencv_contrib.git
+cd opencv_contrib
+git checkout 3.3.1
+cd ..
+```
+Make build directory
+```
+cd opencv
+mkdir build
+cd build
+```
+Run Cmake
+```
+cmake -D CMAKE_BUILD_TYPE=RELEASE \
+      -D CMAKE_INSTALL_PREFIX=/usr/local \
+      -D INSTALL_C_EXAMPLES=ON \
+      -D INSTALL_PYTHON_EXAMPLES=ON \
+      -D WITH_TBB=ON \
+      -D WITH_V4L=ON \
+      -D WITH_QT=ON \
+      -D WITH_OPENGL=ON \
+      -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+      -D BUILD_EXAMPLES=ON ..
+```
+Find out number of CPU cores in your machine
+```
+nproc
+
+# substitute 4 by output of nproc
+make -j4
+sudo make install
+sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf.d/opencv.conf'
+sudo ldconfig
+```
+For installation related issues.
+
+A complete OpenCV installation guide in Ubuntu can be found [here](http://www.codebind.com/cpp-tutorial/install-opencv-ubuntu-cpp/). 
+
 ## Standard install via command-line
 ```
-git clone --recursive https://github.com/dpiet/cpp-boilerplate
+git clone --recursive https://github.com/rohit517/Lane-Detection.git
 cd <path to repository>
 mkdir build
 cd build
 cmake ..
 make
-Run tests: ./test/cpp-test
-Run program: ./app/shell-app
+Run tests: ./test/smartLane-test
+Run program: ./app/shell-app ../input/project_video.mp4
 ```
 
-## Building for code coverage (for assignments beginning in Week 4)
+## Building for code coverage
 ```
 sudo apt-get install lcov
 cmake -D COVERAGE=ON -D CMAKE_BUILD_TYPE=Debug ../
@@ -31,96 +130,31 @@ make code_coverage
 ```
 This generates a index.html page in the build/coverage sub-directory that can be viewed locally in a web browser.
 
-## Working with Eclipse IDE ##
+## For more info
 
-## Installation
+For more details on the algorithm/approach please feel free to reach out to me at rohit517@terpmail.umd.edu.
 
-In your Eclipse workspace directory (or create a new one), checkout the repo (and submodules)
+## License
 ```
-mkdir -p ~/workspace
-cd ~/workspace
-git clone --recursive https://github.com/dpiet/cpp-boilerplate
+MIT License
+
+Copyright (c) 2018 Rohit
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
-
-In your work directory, use cmake to create an Eclipse project for an [out-of-source build] of cpp-boilerplate
-
-```
-cd ~/workspace
-mkdir -p boilerplate-eclipse
-cd boilerplate-eclipse
-cmake -G "Eclipse CDT4 - Unix Makefiles" -D CMAKE_BUILD_TYPE=Debug -D CMAKE_ECLIPSE_VERSION=4.7.0 -D CMAKE_CXX_COMPILER_ARG1=-std=c++14 ../cpp-boilerplate/
-```
-
-## Import
-
-Open Eclipse, go to File -> Import -> General -> Existing Projects into Workspace -> 
-Select "boilerplate-eclipse" directory created previously as root directory -> Finish
-
-# Edit
-
-Source files may be edited under the "[Source Directory]" label in the Project Explorer.
-
-
-## Build
-
-To build the project, in Eclipse, unfold boilerplate-eclipse project in Project Explorer,
-unfold Build Targets, double click on "all" to build all projects.
-
-## Run
-
-1. In Eclipse, right click on the boilerplate-eclipse in Project Explorer,
-select Run As -> Local C/C++ Application
-
-2. Choose the binaries to run (e.g. shell-app, cpp-test for unit testing)
-
-
-## Debug
-
-
-1. Set breakpoint in source file (i.e. double click in the left margin on the line you want 
-the program to break).
-
-2. In Eclipse, right click on the boilerplate-eclipse in Project Explorer, select Debug As -> 
-Local C/C++ Application, choose the binaries to run (e.g. shell-app).
-
-3. If prompt to "Confirm Perspective Switch", select yes.
-
-4. Program will break at the breakpoint you set.
-
-5. Press Step Into (F5), Step Over (F6), Step Return (F7) to step/debug your program.
-
-6. Right click on the variable in editor to add watch expression to watch the variable in 
-debugger window.
-
-7. Press Terminate icon to terminate debugging and press C/C++ icon to switch back to C/C++ 
-perspetive view (or Windows->Perspective->Open Perspective->C/C++).
-
-
-## Plugins
-
-- CppChEclipse
-
-    To install and run cppcheck in Eclipse
-
-    1. In Eclipse, go to Window -> Preferences -> C/C++ -> cppcheclipse.
-    Set cppcheck binary path to "/usr/bin/cppcheck".
-
-    2. To run CPPCheck on a project, right click on the project name in the Project Explorer 
-    and choose cppcheck -> Run cppcheck.
-
-
-- Google C++ Sytle
-
-    To include and use Google C++ Style formatter in Eclipse
-
-    1. In Eclipse, go to Window -> Preferences -> C/C++ -> Code Style -> Formatter. 
-    Import [eclipse-cpp-google-style][reference-id-for-eclipse-cpp-google-style] and apply.
-
-    2. To use Google C++ style formatter, right click on the source code or folder in 
-    Project Explorer and choose Source -> Format
-
-[reference-id-for-eclipse-cpp-google-style]: https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-cpp-google-style.xml
-
-- Git
-
-    It is possible to manage version control through Eclipse and the git plugin, but it typically requires creating another project. If you're interested in this, try it out yourself and contact me on Canvas.
