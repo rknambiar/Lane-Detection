@@ -1,8 +1,16 @@
-# Lane Detection using OpenCV and C++
-[![Build Status](https://travis-ci.org/rohit517/Lane-Detection.svg?branch=master)](https://travis-ci.org/rohit517/Lane-Detection)
-[![Coverage Status](https://coveralls.io/repos/github/rohit517/Lane-Detection/badge.svg?branch=master)](https://coveralls.io/github/rohit517/Lane-Detection?branch=master)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/rohit517/Lane-Detection/blob/master/LICENSE)
+<h1 align="center"> Lane Detection using OpenCV and C++ </h1>
+<p align="center">
+<a href="https://travis-ci.org/rohit517/Lane-Detection">
+<img src="https://travis-ci.org/rohit517/Lane-Detection.svg?branch=master">
+</a>
+ <a href='https://coveralls.io/github/rohit517/Lane-Detection?branch=master'><img src='https://coveralls.io/repos/github/rohit517/Lane-Detection/badge.svg?branch=master'/></a>
+<a href='https://github.com/rohit517/Lane-Detection/blob/master/LICENSE'><img src='https://img.shields.io/badge/license-MIT-blue.svg'/></a>
+</p>
 ---
+
+<p align="center">
+<img src="https://github.com/rohit517/Lane-Detection/blob/master/output/FinalOutput.jpg" width="640" height="360">
+</p>
 
 ## Overview
 
