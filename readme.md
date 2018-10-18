@@ -6,11 +6,12 @@
  <a href='https://coveralls.io/github/rohit517/Lane-Detection?branch=master'><img src='https://coveralls.io/repos/github/rohit517/Lane-Detection/badge.svg?branch=master'/></a>
 <a href='https://github.com/rohit517/Lane-Detection/blob/master/LICENSE'><img src='https://img.shields.io/badge/license-MIT-blue.svg'/></a>
 </p>
----
 
 <p align="center">
 <img src="https://github.com/rohit517/Lane-Detection/blob/master/output/FinalOutput.jpg" width="640" height="360">
 </p>
+
+---
 
 ## Overview
 
