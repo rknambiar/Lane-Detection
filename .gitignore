@@ -1,13 +1,7 @@
-# VS Code files
-*.VC.db*
+# Eclipse files
+.cproject
+.project
+.settings
 
-# OS X files
-.DS_Store
-
-# Build artifacts
+# Ignore folder named build
 build/
-
-# Python
-*.pyc
-
-# Video Files

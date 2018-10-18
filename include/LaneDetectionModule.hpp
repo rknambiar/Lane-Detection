@@ -136,11 +136,13 @@ class LaneDetectionModule {
    *
    *   @param src is a Matrix of source of image
    *   @param src2 is the source color image
+   *   @param dst is the output image
    *   @param lane1 object of class lane to store line characteristic.
    *   @param lane2 object of class lane to store line characteristic
    *   @param inv is the inverse perspective transformation matrix
    */
-  void displayOutput(const cv::Mat& src, cv::Mat& src2, Lane& lane1,
+  void displayOutput(const cv::Mat& src, cv::Mat& src2, cv::Mat& dst,
+                     Lane& lane1,
                      Lane& lane2, cv::Mat inv);
 
   /**
