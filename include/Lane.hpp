@@ -5,7 +5,7 @@
  *  @date    10/13/2018
  *  @version 1.0
  *
- *  @brief UMD ENPM 808X, Week 6, Midterm Project
+ *  @brief Lane Detection
  *
  *  @section DESCRIPTION
  *

@@ -5,7 +5,7 @@
  *  @date    10/12/2018
  *  @version 1.0
  *
- *  @brief Smart-Lane
+ *  @brief Lane Detection
  *
  *  @Description DESCRIPTION
  *
