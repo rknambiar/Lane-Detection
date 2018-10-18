@@ -118,7 +118,7 @@ For installation related issues.
 
 A complete OpenCV installation guide in Ubuntu can be found [here](http://www.codebind.com/cpp-tutorial/install-opencv-ubuntu-cpp/). 
 
-## Standard install via command-line
+## Build Lane Detection
 ```
 git clone --recursive https://github.com/rohit517/Lane-Detection.git
 cd <path to repository>
@@ -126,6 +126,12 @@ mkdir build
 cd build
 cmake ..
 make
+```
+
+## Demo
+
+While still in the build folder run the following commands
+```
 Run tests: ./test/smartLane-test
 Run program: ./app/shell-app ../input/project_video.mp4
 ```
