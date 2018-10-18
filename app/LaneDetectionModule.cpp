@@ -578,8 +578,8 @@ void LaneDetectionModule::displayOutput(const cv::Mat& src, cv::Mat& src2,
  */
 bool LaneDetectionModule::detectLane(std::string videoName) {
   cv::VideoCapture cap(videoName);  // open the default camera
-  cv::VideoWriter video("LaneDetection.mp4", CV_FOURCC('M', 'J', 'P', 'G'), 20,
-                        cv::Size(1280, 720));
+//  cv::VideoWriter video("LaneDetection.mp4", CV_FOURCC('M', 'J', 'P', 'G'), 20,
+//                        cv::Size(1280, 720));
   if (!cap.isOpened())  // check if we succeeded
     return 0;
 
@@ -588,7 +588,6 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
 
   Lane leftLane(2, "red", 10), rightLane(2, "green", 10);
   int frameNumber = 0;
-  bool notlast = true;
 
   for (;;) {
     cv::Mat frame, whiteThreshold, yellowThreshold, combinedThreshold,
@@ -645,92 +644,8 @@ bool LaneDetectionModule::detectLane(std::string videoName) {
                   invtransformMatrix);
 
     // Display routine
-    cv::Mat combined;
-//    hconcat(grayscaleImage, ROIImage, combined);
-    int looper = (frameNumber / 100);
-//    frame.copyTo(combined);
-    if (looper == 0 && notlast) {
-      frame.copyTo(combined);
-      cv::putText(combined, "Step 0. Input Image", cv::Point(350, 50),
-                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(90, 28, 226), 2);
-    } else if (looper == 1 && notlast) {
-      whiteThreshold.copyTo(combined);
-      cv::cvtColor(combined, combined, CV_GRAY2BGR);
-      cv::putText(combined, "Step 1. White Thresholding", cv::Point(350, 50),
-                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(90, 28, 226), 2);
-      cv::putText(combined, "Apply white threshold to detect right lane.",
-                  cv::Point(350, 80), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(90, 28, 226), 2);
-    } else if (looper == 2 && notlast) {
-      yellowThreshold.copyTo(combined);
-      cv::cvtColor(combined, combined, CV_GRAY2BGR);
-      cv::putText(combined, "Step 2. Yellow Thresholding in HSL Space",
-                  cv::Point(350, 50),
-                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(23, 226, 199), 2);
-      cv::putText(combined,
-                  "Apply yellow threshold in HSL to detect left lane.",
-                  cv::Point(350, 80), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(23, 226, 199), 2);
-    } else if (looper == 3 && notlast) {
-      combinedThreshold.copyTo(combined);
-      cv::cvtColor(combined, combined, CV_GRAY2BGR);
-      cv::putText(combined, "Step 3. Combine thresholding",
-                  cv::Point(350, 50), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(200, 226, 72), 2);
-      cv::putText(combined,
-                  "Combine the yellow and white thresholding.",
-                  cv::Point(350, 80), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(200, 226, 72), 2);
-    } else if (looper == 4 && notlast) {
-      gaussianBlurImage.copyTo(combined);
-      cv::cvtColor(combined, combined, CV_GRAY2BGR);
-      cv::putText(combined, "Step 4. Apply Gaussian Blur", cv::Point(350, 50),
-                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(226, 111, 172), 2);
-    } else if (looper == 5 && notlast) {
-      ROIImage.copyTo(combined);
-      cv::cvtColor(combined, combined, CV_GRAY2BGR);
-      cv::putText(combined, "Step 5. Region of Interest Mask",
-                  cv::Point(350, 50), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(213, 226, 183), 2);
-      cv::putText(combined,
-                  "Apply region of interest(ROI) mask on the lower half.",
-                  cv::Point(350, 80), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(213, 226, 183), 2);
-    } else if (looper == 6 && notlast) {
-      warpedImage.copyTo(combined);
-      cv::cvtColor(combined, combined, CV_GRAY2BGR);
-      cv::putText(combined, "Step 6. Perspective Transform", cv::Point(350, 50),
-                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(79, 226, 84), 2);
-      cv::putText(combined, "Apply perspective transform to see a top-view.",
-                  cv::Point(350, 80), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(79, 226, 84), 2);
-    }
-    else if (looper == 7 && notlast) {
-      laneColor.copyTo(combined);
-      cv::putText(combined, "Step 7. Sliding Window",
-                  cv::Point(350, 50), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(255, 255, 255), 2);
-      cv::putText(combined,
-                  "Apply sliding window approach for lane detection.",
-                  cv::Point(350, 80), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(255, 255, 255), 2);
-    }
-    else if (looper == 8 && notlast) {
-      unwarpedOutput.copyTo(combined);
-      cv::putText(combined, "Step 8. Project lanes back.", cv::Point(350, 50),
-                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(226, 75, 80), 2);
-      cv::putText(combined,
-                  "Undo the perspective transform using the inverse matrix",
-                  cv::Point(350, 80), cv::FONT_HERSHEY_SIMPLEX, 0.8,
-                  cv::Scalar(226, 75, 80), 2);
-    }
-    else {
-      notlast = false;
-      finalOutput.copyTo(combined);
-    }
 
-    imshow("Lane Detection", combined);
-    video.write(combined);
+    imshow("Lane Detection", finalOutput);
     frameNumber++;
     if (cv::waitKey(30) >= 0)
       break;

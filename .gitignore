@@ -5,3 +5,7 @@
 
 # Ignore folder named build
 build/
+
+# Video files 
+*.mp4
+*.avi
